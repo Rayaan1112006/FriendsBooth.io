@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FriendsBooth.io — east or west Abrish is the best</title>
-    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FriendsBooth.io — Different places, same people</title>
+
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -17,7 +20,7 @@
             theme: {
                 extend: {
                     colors: {
-                        vanilla: '#F3EBDD',
+                        paper: '#F3EBDD',
                         cream: '#FBF7F0',
                         sand: '#E9DFCF',
                         espresso: '#51463D',
@@ -28,21 +31,20 @@
                         caramel: '#D9B99B'
                     },
                     fontFamily: {
-                        sans: ['"DM Sans"', 'sans-serif'],
                         display: ['"Space Grotesk"', 'sans-serif'],
+                        sans: ['"DM Sans"', 'sans-serif'],
                         mono: ['"DM Mono"', 'monospace'],
                         hand: ['"Caveat"', 'cursive']
+                    },
+                    boxShadow: {
+                        hard: '4px 4px 0px #51463D',
+                        hardSm: '2px 2px 0px #51463D',
+                        paperLift: '0 10px 25px -5px rgba(81, 70, 61, 0.12), 0 4px 10px -2px rgba(81, 70, 61, 0.06)'
                     }
                 }
             }
-        }
+        };
     </script>
-
-    <!-- MediaPipe Selfie Segmentation CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
-
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         body {
@@ -50,1465 +52,1970 @@
             color: #51463D;
             font-family: 'DM Sans', sans-serif;
             overflow-x: hidden;
-            background-image: radial-gradient(#51463D 0.4px, transparent 0.4px);
-            background-size: 16px 16px;
+            background-image: radial-gradient(rgba(81, 70, 61, 0.08) 1px, transparent 0);
+            background-size: 24px 24px;
         }
 
         .paper-card {
             background-color: #FBF7F0;
-            border: 2px solid #51463D;
+            border: 1.5px solid #51463D;
+            box-shadow: 4px 4px 0px #51463D;
+            border-radius: 14px;
+        }
+
+        .btn-brutal {
+            border: 1.5px solid #51463D;
+            box-shadow: 3px 3px 0px #51463D;
+            border-radius: 10px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+        }
+
+        .btn-brutal:hover:not(:disabled) {
+            transform: translate(-1px, -1px);
             box-shadow: 4px 4px 0px #51463D;
         }
 
-        .paper-button {
-            background-color: #D88772;
-            color: #FBF7F0;
-            border: 2px solid #51463D;
-            box-shadow: 3px 3px 0px #51463D;
-            transition: all 0.15s ease-in-out;
-            font-weight: 700;
-        }
-        .paper-button:hover {
-            transform: translate(-1px, -1px);
-            box-shadow: 5px 5px 0px #51463D;
-        }
-        .paper-button:active {
+        .btn-brutal:active:not(:disabled) {
             transform: translate(2px, 2px);
             box-shadow: 1px 1px 0px #51463D;
         }
 
-        .paper-button-secondary {
-            background-color: #FBF7F0;
-            color: #51463D;
-            border: 2px solid #51463D;
-            box-shadow: 3px 3px 0px #51463D;
-            transition: all 0.15s ease-in-out;
-            font-weight: 700;
-        }
-        .paper-button-secondary:hover {
-            background-color: #E9DFCF;
-            transform: translate(-1px, -1px);
-            box-shadow: 5px 5px 0px #51463D;
+        .btn-brutal:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
-        /* Screen Flash */
-        @keyframes flash-white {
-            0% { opacity: 0; }
-            30% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-        .flash-overlay {
-            animation: flash-white 0.5s ease-out forwards;
-        }
-
-        /* Filters */
-        .filter-warm { filter: sepia(0.2) contrast(1.05) saturate(1.1); }
-        .filter-disposable { filter: contrast(1.2) saturate(1.25) sepia(0.15); }
-        .filter-bw { filter: grayscale(1) contrast(1.2); }
-        .filter-anime { filter: contrast(1.1) saturate(1.4) brightness(1.05); }
-        .filter-none { filter: none; }
-
-        /* Wiggle animations */
         @keyframes wiggle {
             0%, 100% { transform: rotate(-2deg); }
             50% { transform: rotate(2deg); }
         }
-        .animate-wiggle { animation: wiggle 3.5s ease-in-out infinite; }
+
+        .doodle-wiggle {
+            animation: wiggle 3.5s ease-in-out infinite;
+        }
+
+        .flash-overlay {
+            position: fixed;
+            inset: 0;
+            background: #FFFDF8;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.12s ease-out;
+        }
+
+        .flash-overlay.active {
+            opacity: 0.96;
+            transition: none;
+        }
+
+        @keyframes developAnim {
+            0% { filter: blur(18px) contrast(0.5) brightness(1.4) saturate(0.2); opacity: 0.55; }
+            55% { filter: blur(6px) contrast(0.85) brightness(1.1) saturate(0.7); opacity: 0.88; }
+            100% { filter: blur(0px) contrast(1) brightness(1) saturate(1); opacity: 1; }
+        }
+
+        .developing-photo {
+            animation: developAnim 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+        }
+
+        .diary-page-turn {
+            animation: pageFlipIn 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        @keyframes pageFlipIn {
+            0% {
+                opacity: 0.3;
+                transform: perspective(1200px) rotateY(-18deg) scale(0.98);
+            }
+            100% {
+                opacity: 1;
+                transform: perspective(1200px) rotateY(0deg) scale(1);
+            }
+        }
+
+        .filter-warm { filter: sepia(0.22) contrast(1.05) saturate(1.15) brightness(1.02); }
+        .filter-disposable { filter: contrast(1.14) saturate(1.25) sepia(0.18) brightness(0.98); }
+        .filter-y2k { filter: contrast(1.22) saturate(1.35) hue-rotate(-6deg) brightness(1.04); }
+        .filter-bw { filter: grayscale(1) contrast(1.18); }
+        .filter-softflash { filter: brightness(1.12) contrast(0.94) saturate(1.08); }
+        .filter-washed { filter: contrast(0.85) brightness(1.08) saturate(0.82); }
+        .filter-vintagepaper { filter: sepia(0.35) contrast(0.95) brightness(0.97); }
+        .filter-none { filter: none; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-terracotta selection:text-white relative">
+<body class="min-h-screen flex flex-col selection:bg-butter selection:text-espresso">
 
-    <!-- Screen Flash Element -->
-    <div id="flash-element" class="fixed inset-0 bg-white pointer-events-none z-50 opacity-0"></div>
+    <!-- Camera Flash Overlay -->
+    <div id="flashOverlay" class="flash-overlay"></div>
 
-    <!-- Hidden Live Video Source Element -->
-    <video id="webcam-video" autoplay playsinline muted class="fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"></video>
+    <!-- Toast Notification -->
+    <div id="toastBanner" class="fixed bottom-5 right-5 z-[999] hidden max-w-sm bg-espresso text-cream font-mono text-xs px-4 py-3 rounded-xl border-2 border-espresso shadow-hard">
+        <span id="toastText">Notification</span>
+    </div>
 
-    <!-- MAIN NAVBAR -->
-    <nav class="sticky top-0 z-40 border-b-2 border-espresso bg-vanilla/95 backdrop-blur-md px-4 md:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-            
-            <!-- Brand Logo & Subtitle -->
-            <div class="flex flex-col cursor-pointer" onclick="showView('landing')">
-                <div class="flex items-center gap-2">
-                    <span class="font-display font-bold text-2xl md:text-3xl tracking-tight text-espresso">FriendsBooth.io</span>
-                    <span class="hidden sm:inline-block px-2.5 py-0.5 text-xs font-mono bg-butter text-espresso border border-espresso rounded-full font-bold shadow-[1px_1px_0px_#51463D]">
-                        PHOTO CLUB
-                    </span>
-                </div>
-                <span class="font-hand text-base font-bold text-terracotta tracking-wide -mt-1 leading-none">
-                    east or west Abrish is the best
+    <!-- TOP NAVIGATION -->
+    <header class="sticky top-0 z-40 bg-paper/90 backdrop-blur-sm border-b-2 border-espresso">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+            <button onclick="navigateTo('landing')" class="flex items-center gap-2.5 text-left group">
+                <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-terracotta text-cream border-2 border-espresso shadow-hardSm group-hover:-rotate-6 transition-transform">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
                 </span>
-            </div>
+                <div>
+                    <div class="font-display font-bold text-lg leading-none tracking-tight">FriendsBooth.io</div>
+                    <div class="font-mono text-[10px] text-espresso/75 mt-0.5">Different places, same people</div>
+                </div>
+            </button>
 
-            <!-- Navigation Links -->
-            <div class="flex items-center gap-2 sm:gap-4 font-mono text-xs">
-                <button onclick="scrollToHowItWorks()" class="hidden md:inline-block hover:text-terracotta font-bold px-2 py-1">
-                    HOW IT WORKS
+            <nav class="hidden md:flex items-center gap-6 font-mono text-xs uppercase tracking-wider">
+                <button onclick="navigateTo('landing'); scrollToSection('howItWorks');" class="hover:text-terracotta transition-colors">How it works</button>
+                <button onclick="navigateTo('landing'); scrollToSection('diarySection');" class="hover:text-terracotta transition-colors">Scrapbook Diary</button>
+                <button onclick="openJoinModal()" class="hover:text-terracotta transition-colors">Join Room</button>
+            </nav>
+
+            <div class="flex items-center gap-2">
+                <button onclick="openJoinModal()" class="btn-brutal bg-cream hover:bg-sand text-espresso font-mono text-xs px-3 py-2">
+                    Join Code
                 </button>
-                <button onclick="showView('diary')" class="paper-button-secondary px-3 py-2 rounded-xl font-bold flex items-center gap-1.5">
-                    <i data-lucide="book-open" class="w-4 h-4 text-terracotta"></i>
-                    <span>DIARY</span>
-                </button>
-                <button onclick="openCreateModal()" class="paper-button px-4 py-2 rounded-xl font-bold">
-                    CREATE A BOOTH
+                <button onclick="openCreateModal()" class="btn-brutal bg-terracotta hover:bg-[#cc7862] text-cream font-mono text-xs font-medium px-3.5 py-2 flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                    <span>Create Booth</span>
                 </button>
             </div>
         </div>
-    </nav>
+    </header>
 
-    <!-- MAIN VIEWPORT -->
-    <main class="flex-1 w-full">
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1">
 
-        <!-- ========================================== -->
-        <!-- 1. LANDING PAGE VIEW                       -->
-        <!-- ========================================== -->
-        <section id="view-landing" class="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 space-y-20">
-            
-            <!-- Hero Grid -->
+        <!-- ========================================================= -->
+        <!-- VIEW 1: LANDING PAGE & SCRAPBOOK DIARY                     -->
+        <!-- ========================================================= -->
+        <section id="view-landing" class="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16 space-y-20">
+
+            <!-- Hero Section -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-                
-                <!-- Left Editorial Copy -->
-                <div class="lg:col-span-7 space-y-6 relative">
-                    <div class="inline-flex items-center gap-2 bg-cream border-2 border-espresso px-3 py-1.5 rounded-full font-mono text-xs font-bold shadow-[2px_2px_0px_#51463D]">
-                        <span class="w-2.5 h-2.5 rounded-full bg-sage animate-pulse"></span>
-                        <span>THE INTERNET FRIENDS PHOTO CLUB • LIVE SYNC</span>
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="inline-flex items-center gap-2 bg-cream border border-espresso rounded-full px-3.5 py-1.5 font-mono text-xs shadow-hardSm">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sage animate-pulse border border-espresso"></span>
+                        <span>The Internet Friends Photo Club • Distance is stupid. Let's take a picture.</span>
                     </div>
 
-                    <h1 class="font-display font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[0.95] tracking-tight text-espresso uppercase">
-                        YOU LIVE THERE.<br>
-                        I LIVE HERE.<br>
-                        <span class="text-terracotta">LET'S BE IN THIS.</span>
+                    <h1 class="font-display font-bold text-5xl sm:text-6xl md:text-7xl leading-[0.96] tracking-tight text-espresso">
+                        YOU LIVE THERE.<br />
+                        I LIVE HERE.<br />
+                        <span class="inline-block bg-butter px-3 py-0.5 mt-1 border-2 border-espresso rounded-xl shadow-hardSm -rotate-1">LET'S BE IN THIS.</span>
                     </h1>
 
-                    <p class="text-lg md:text-xl text-espresso/85 max-w-xl leading-relaxed">
-                        A virtual synchronized photo booth for the people you know through a screen, but wish you could hug in real life. <strong>Distance is stupid. Let's take a picture.</strong>
+                    <p class="text-lg sm:text-xl text-espresso/85 max-w-xl leading-relaxed">
+                        A virtual synchronized photo booth for the people you know through a screen, but wish you could hug in real life. Line up your pose, pick a shared scene, hit cheese together, and save the strip.
                     </p>
 
-                    <div class="flex flex-wrap items-center gap-4 pt-2">
-                        <button onclick="openCreateModal()" class="paper-button px-7 py-4 rounded-2xl text-base md:text-lg flex items-center gap-2">
-                            <i data-lucide="camera" class="w-5 h-5"></i>
+                    <div class="flex flex-wrap items-center gap-3.5 pt-1">
+                        <button onclick="openCreateModal()" class="btn-brutal bg-terracotta hover:bg-[#cc7862] text-cream font-display font-bold text-base px-6 py-3.5 flex items-center gap-2">
+                            <i data-lucide="aperture" class="w-5 h-5"></i>
                             <span>CREATE A BOOTH</span>
                         </button>
-                        <button onclick="openJoinModal()" class="paper-button-secondary px-7 py-4 rounded-2xl text-base md:text-lg flex items-center gap-2">
+                        <button onclick="openJoinModal()" class="btn-brutal bg-cream hover:bg-sand text-espresso font-display font-semibold text-base px-6 py-3.5 flex items-center gap-2">
                             <i data-lucide="users" class="w-5 h-5"></i>
                             <span>JOIN YOUR FRIENDS</span>
                         </button>
                     </div>
 
-                    <!-- Handwritten Margin Notes -->
-                    <div class="pt-4 flex flex-wrap gap-6 font-hand text-xl text-espresso/75">
-                        <span class="-rotate-2 inline-block">✎ "3 continents. 4 idiots. 1 photo."</span>
-                        <span class="rotate-1 inline-block text-terracotta">★ "Smile like the Wi-Fi isn't struggling."</span>
+                    <!-- Floating Notes -->
+                    <div class="flex flex-wrap gap-3 pt-2 font-hand text-xl text-espresso/90">
+                        <span class="bg-cream/90 border border-espresso/40 rounded-lg px-3 py-1 -rotate-2">"3 continents. 4 idiots. 1 photo."</span>
+                        <span class="bg-butter/60 border border-espresso/40 rounded-lg px-3 py-1 rotate-1">"Someone is definitely blinking."</span>
+                        <span class="bg-dustyblue/40 border border-espresso/40 rounded-lg px-3 py-1 -rotate-1">"Smile like the Wi-Fi isn't struggling."</span>
                     </div>
                 </div>
 
-                <!-- Right Hero Analog Strip Collage -->
+                <!-- Right Hero Photo Strip Collage (Dynamic 2 rotating + Ray constant) -->
                 <div class="lg:col-span-5 relative flex justify-center">
-                    <!-- Floating Doodle Badge -->
-                    <div class="absolute -top-5 -left-2 md:left-4 z-20 bg-butter border-2 border-espresso px-3 py-1 rounded-xl font-hand text-lg font-bold shadow-[3px_3px_0px_#51463D] -rotate-6 animate-wiggle">
-                        POSE, IDIOT!
-                    </div>
+                    <!-- Decorative Doodle SVG -->
+                    <svg class="hidden sm:block absolute -top-6 -right-3 w-16 h-16 text-terracotta doodle-wiggle z-10" viewBox="0 0 80 80" fill="none">
+                        <path d="M40 8 L46 28 L67 28 L50 40 L56 61 L40 48 L24 61 L30 40 L13 28 L34 28 Z" stroke="#51463D" stroke-width="2.5" fill="#E9CB73" />
+                    </svg>
 
-                    <div class="paper-card p-5 rounded-3xl bg-cream max-w-sm w-full rotate-2 hover:rotate-0 transition-transform duration-300">
-                        <div class="flex items-center justify-between border-b-2 border-espresso pb-2 mb-3 font-mono text-xs font-bold">
-                            <span>BOOTH #ABRISH01</span>
-                            <span class="text-sage">● SYNCED</span>
+                    <div class="paper-card p-4 sm:p-5 max-w-sm w-full rotate-1 hover:rotate-0 transition-transform duration-300">
+                        <div class="flex items-center justify-between font-mono text-[11px] text-espresso/70 mb-3 pb-2 border-b border-dashed border-espresso/30">
+                            <span>STRIP #FRNDS-09</span>
+                            <span class="bg-sage/50 text-espresso px-2 py-0.5 rounded border border-espresso/40">SYNCED</span>
                         </div>
+
                         <div class="space-y-3">
-                            <div class="bg-dustyblue/40 border-2 border-espresso rounded-xl p-4 flex items-center justify-between">
+                            <!-- Frame 1 -->
+                            <div class="relative rounded-lg overflow-hidden border-2 border-espresso bg-dustyblue/40 h-28 flex items-center justify-between px-4">
                                 <div>
-                                    <p class="font-mono text-[10px] uppercase font-bold">TOKYO • 02:14 AM</p>
-                                    <p class="font-display font-bold text-lg">Abrish</p>
+                                    <div class="font-mono text-[10px] uppercase tracking-wider bg-cream px-2 py-0.5 rounded border border-espresso inline-block mb-1">
+                                        <span id="heroLoc1">Bengaluru, Karnataka</span>
+                                    </div>
+                                    <div class="font-display font-bold text-lg" id="heroName1">Bhav</div>
                                 </div>
-                                <span class="font-hand text-xl bg-butter px-2 py-0.5 rounded border border-espresso">✌️ peace</span>
+                                <div class="font-hand text-2xl text-espresso -rotate-6 bg-butter px-2.5 py-0.5 rounded border border-espresso">
+                                    POSE, IDIOT.
+                                </div>
                             </div>
-                            <div class="bg-terracotta/25 border-2 border-espresso rounded-xl p-4 flex items-center justify-between">
+
+                            <!-- Frame 2 -->
+                            <div class="relative rounded-lg overflow-hidden border-2 border-espresso bg-terracotta/30 h-28 flex items-center justify-between px-4">
                                 <div>
-                                    <p class="font-mono text-[10px] uppercase font-bold">LONDON • 06:14 PM</p>
-                                    <p class="font-display font-bold text-lg">Ray</p>
+                                    <div class="font-mono text-[10px] uppercase tracking-wider bg-cream px-2 py-0.5 rounded border border-espresso inline-block mb-1">
+                                        <span id="heroLoc2">Tokyo, Japan</span>
+                                    </div>
+                                    <div class="font-display font-bold text-lg" id="heroName2">Tixiee</div>
                                 </div>
-                                <span class="font-hand text-xl bg-cream px-2 py-0.5 rounded border border-espresso">someone blinked.</span>
+                                <div class="font-hand text-xl text-espresso rotate-3 bg-cream px-2.5 py-0.5 rounded border border-espresso">
+                                    YOU LOOK GOOD BTW.
+                                </div>
+                            </div>
+
+                            <!-- Frame 3: Constant Ray -->
+                            <div class="relative rounded-lg overflow-hidden border-2 border-espresso bg-sage/40 h-28 flex items-center justify-between px-4">
+                                <div>
+                                    <div class="font-mono text-[10px] uppercase tracking-wider bg-cream px-2 py-0.5 rounded border border-espresso inline-block mb-1">
+                                        <span id="heroLocRay">Jaipur, Rajasthan</span>
+                                    </div>
+                                    <div class="font-display font-bold text-lg flex items-center gap-1.5">
+                                        <span>Ray</span>
+                                        <span class="font-mono text-[10px] bg-terracotta text-cream px-1.5 py-0.5 rounded">ALWAYS HERE</span>
+                                    </div>
+                                </div>
+                                <div class="font-hand text-xl text-espresso -rotate-2 bg-cream px-2.5 py-0.5 rounded border border-espresso">
+                                    distance is a scam.
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-4 pt-3 border-t-2 border-espresso/20 flex items-center justify-between font-hand text-lg font-bold text-terracotta">
-                            <span>"this is going in the archives."</span>
-                            <span class="font-mono text-xs text-espresso">1/4 STRIP</span>
+
+                        <div class="mt-3 pt-2.5 border-t border-dashed border-espresso/30 flex items-center justify-between font-mono text-[11px] text-espresso/80">
+                            <span>FRIENDSBOOTH.IO</span>
+                            <span>Different places, same people</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- How It Works Section -->
-            <div id="how-it-works-section" class="border-t-2 border-espresso/20 pt-14 space-y-8">
-                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <!-- HOW IT WORKS SECTION -->
+            <div id="howItWorks" class="pt-6">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-6">
                     <div>
-                        <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">ANALOG WARMTH + DIGITAL SYNC</span>
-                        <h2 class="font-display text-3xl md:text-4xl font-bold uppercase text-espresso">How the booth works</h2>
+                        <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-medium">How It Works</span>
+                        <h2 class="font-display font-bold text-3xl sm:text-4xl mt-1">Not a video call. A shared shutter.</h2>
                     </div>
-                    <p class="font-hand text-2xl text-espresso/80">"distance is a scam."</p>
+                    <p class="font-mono text-xs text-espresso/75">1. Position yourself • 2. Sync countdown • 3. Develop strip</p>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="paper-card p-6 rounded-2xl bg-cream space-y-3">
-                        <span class="inline-block font-mono text-xs font-bold bg-butter px-2.5 py-1 rounded border border-espresso">STEP 01</span>
-                        <h3 class="font-display font-bold text-xl">Open a Studio Room</h3>
-                        <p class="text-sm text-espresso/80">Create a booth, share your room code, and step onto the virtual studio stage with live camera preview.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    <div class="paper-card p-5 space-y-2.5">
+                        <div class="w-9 h-9 rounded-lg bg-butter border border-espresso flex items-center justify-center font-mono font-bold text-sm">01</div>
+                        <h3 class="font-display font-bold text-xl">Move & Scale Yourself</h3>
+                        <p class="text-sm text-espresso/80 leading-relaxed">
+                            Drag yourself directly on the booth canvas or use the X/Y position & zoom sliders before capturing. Toggle background removal and drop into Anime, Spider-Man, or classic scenes.
+                        </p>
                     </div>
-                    <div class="paper-card p-6 rounded-2xl bg-cream space-y-3">
-                        <span class="inline-block font-mono text-xs font-bold bg-sage/60 px-2.5 py-1 rounded border border-espresso">STEP 02</span>
-                        <h3 class="font-display font-bold text-xl">Position & Pick a Scene</h3>
-                        <p class="text-sm text-espresso/80">Drag yourself anywhere in the frame, toggle background removal, and choose Anime, Spider-Man, or Vintage Café.</p>
+                    <div class="paper-card p-5 space-y-2.5">
+                        <div class="w-9 h-9 rounded-lg bg-dustyblue border border-espresso flex items-center justify-center font-mono font-bold text-sm">02</div>
+                        <h3 class="font-display font-bold text-xl">1, 4, or 6-Shot Strips</h3>
+                        <p class="text-sm text-espresso/80 leading-relaxed">
+                            Snap a single group frame or shoot a multi-frame strip of 4 or 6 poses with synchronized countdowns, camera flash, and darkroom development.
+                        </p>
                     </div>
-                    <div class="paper-card p-6 rounded-2xl bg-cream space-y-3">
-                        <span class="inline-block font-mono text-xs font-bold bg-terracotta/40 px-2.5 py-1 rounded border border-espresso">STEP 03</span>
-                        <h3 class="font-display font-bold text-xl">Develop & Keep Forever</h3>
-                        <p class="text-sm text-espresso/80">Snap 1, 4, or 6 synchronized poses, watch them develop in the darkroom, and download or stick them in your diary.</p>
+                    <div class="paper-card p-5 space-y-2.5">
+                        <div class="w-9 h-9 rounded-lg bg-sage border border-espresso flex items-center justify-center font-mono font-bold text-sm">03</div>
+                        <h3 class="font-display font-bold text-xl">Stick Into Your Diary</h3>
+                        <p class="text-sm text-espresso/80 leading-relaxed">
+                            Download high-res PNGs or stick your fresh photo right onto a 3D turning diary page, resize & tilt it, write notes, and check off everyone you want a pic with.
+                        </p>
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- ========================================== -->
-        <!-- 2. LIVE STUDIO BOOTH VIEW                  -->
-        <!-- ========================================== -->
-        <section id="view-room" class="hidden max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-6">
-            
-            <!-- Room Top Bar -->
-            <div class="paper-card p-4 rounded-2xl bg-cream flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <span class="w-3 h-3 rounded-full bg-sage animate-pulse"></span>
+            <!-- ========================================================= -->
+            <!-- INTERACTIVE 3D SCRAPBOOK DIARY SECTION                    -->
+            <!-- ========================================================= -->
+            <div id="diarySection" class="pt-4">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <div>
-                        <h2 id="room-header-title" class="font-display font-bold text-lg md:text-xl uppercase">ROOM: FRIENDS CLUB</h2>
-                        <p class="font-mono text-xs text-espresso/75">CODE: <strong id="room-header-code" class="text-terracotta">RAY123</strong> • <span id="cam-status-label">INITIALIZING CAMERA...</span></p>
-                    </div>
-                </div>
-
-                <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
-                    <button onclick="retryCameraAccess()" class="paper-button-secondary px-3 py-2 rounded-xl flex items-center gap-1.5">
-                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-                        <span>Enable Camera</span>
-                    </button>
-                    <button onclick="copyRoomLink()" class="paper-button-secondary px-3 py-2 rounded-xl flex items-center gap-1.5">
-                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
-                        <span>Invite Link</span>
-                    </button>
-                    <button onclick="leaveRoom()" class="bg-sand hover:bg-terracotta hover:text-white border-2 border-espresso px-3 py-2 rounded-xl font-bold transition-colors">
-                        Leave
-                    </button>
-                </div>
-            </div>
-
-            <!-- Main Studio Workspace -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                
-                <!-- Left/Center Live Camera Canvas Stage -->
-                <div class="lg:col-span-8 space-y-4">
-                    <div class="paper-card p-3 sm:p-4 rounded-3xl bg-espresso relative overflow-hidden flex flex-col items-center justify-center">
-                        
-                        <!-- Live Interactive Canvas -->
-                        <canvas id="live-stage-canvas" width="640" height="440" class="w-full max-w-[640px] h-auto rounded-2xl border-2 border-cream shadow-xl cursor-move filter-warm bg-sand"></canvas>
-
-                        <!-- Helper Tip Pill -->
-                        <div class="mt-3 flex flex-wrap items-center justify-between w-full max-w-[640px] text-cream font-mono text-xs px-1 gap-2">
-                            <span>✋ Drag yourself directly on the frame to reposition</span>
-                            <span id="sync-clock-badge" class="text-butter">● LIVE CAPTURE READY</span>
-                        </div>
+                        <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-medium">Interactive Scrapbook</span>
+                        <h2 class="font-display font-bold text-3xl sm:text-4xl mt-1">Our Page-Turning Diary</h2>
+                        <p class="text-sm text-espresso/75 mt-1">Flip pages from the corner or arrows, stick photos, resize & change fonts, add new pages, check off the photo wishlist, and read Ray's bio at the end.</p>
                     </div>
 
-                    <!-- Multi-Shot Thumbnail Strip Preview -->
-                    <div id="multi-shot-tray" class="hidden paper-card p-3 rounded-2xl bg-cream space-y-2">
-                        <span class="font-mono text-xs font-bold uppercase text-terracotta">CAPTURED SEQUENCE POSES:</span>
-                        <div id="thumbnails-container" class="flex flex-wrap gap-3"></div>
-                    </div>
-
-                    <!-- Primary Capture Action Bar -->
-                    <div class="paper-card p-4 rounded-2xl bg-cream flex flex-wrap items-center justify-between gap-4">
-                        <div class="flex items-center gap-2">
-                            <button onclick="toggleCamera()" id="toggle-cam-btn" class="paper-button-secondary px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
-                                <i data-lucide="video" class="w-4 h-4"></i>
-                                <span>Cam On</span>
-                            </button>
-                            <button onclick="toggleReadyState()" class="paper-button-secondary px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
-                                <i data-lucide="check-circle" class="w-4 h-4 text-sage"></i>
-                                <span id="ready-btn-text">I'M READY</span>
-                            </button>
-                            <button onclick="toggleVirtualFriend()" class="paper-button-secondary px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
-                                <i data-lucide="user-plus" class="w-4 h-4"></i>
-                                <span id="friend-sim-label">+ Add Friend</span>
-                            </button>
-                        </div>
-
-                        <button onclick="startPhotoCaptureSequence()" id="main-capture-btn" class="paper-button px-6 py-3.5 rounded-2xl text-base flex items-center gap-2">
-                            <i data-lucide="aperture" class="w-5 h-5"></i>
-                            <span id="capture-btn-label">TAKE PHOTO</span>
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <button onclick="addNewDiaryPage()" class="btn-brutal bg-butter hover:bg-[#dfc062] text-espresso font-mono text-xs font-medium px-3.5 py-2.5 flex items-center gap-1.5">
+                            <i data-lucide="file-plus-2" class="w-4 h-4"></i>
+                            <span>+ Add New Page</span>
+                        </button>
+                        <button onclick="prevDiaryPage()" class="btn-brutal bg-cream hover:bg-sand text-espresso font-mono text-xs px-3 py-2.5 flex items-center gap-1">
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                            <span>Prev</span>
+                        </button>
+                        <span id="diaryPageIndicator" class="font-mono text-xs bg-sand px-3 py-2 rounded-lg border border-espresso">Page 1 / 3</span>
+                        <button onclick="nextDiaryPage()" class="btn-brutal bg-cream hover:bg-sand text-espresso font-mono text-xs px-3 py-2.5 flex items-center gap-1">
+                            <span>Next Page</span>
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Right Controls Sidebar -->
-                <div class="lg:col-span-4 space-y-4 font-mono text-xs">
-                    
-                    <!-- Position & Scale Controls -->
-                    <div class="paper-card p-4 rounded-2xl bg-cream space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="font-bold uppercase text-espresso">1. Frame Position & Size</span>
-                            <button onclick="resetStagePosition()" class="text-terracotta underline font-bold">Reset</button>
+                <!-- Diary Book Wrapper -->
+                <div id="diaryBookContainer" class="paper-card relative overflow-hidden p-5 sm:p-8 min-h-[520px] diary-page-turn">
+                    <!-- Corner Flip Trigger -->
+                    <button onclick="nextDiaryPage()" title="Turn Page" class="group absolute bottom-0 right-0 w-16 h-16 z-20 flex items-end justify-end p-2.5 focus:outline-none">
+                        <span class="w-12 h-12 bg-sand border-t-2 border-l-2 border-espresso rounded-tl-2xl shadow-hardSm flex items-center justify-center group-hover:w-14 group-hover:h-14 group-hover:bg-butter transition-all">
+                            <i data-lucide="corner-up-right" class="w-4 h-4 text-espresso"></i>
+                        </span>
+                    </button>
+
+                    <!-- Dynamic Page Content Rendered by JS -->
+                    <div id="diaryPageContent"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 2: LIVE PHOTO BOOTH STUDIO                           -->
+        <!-- ========================================================= -->
+        <section id="view-studio" class="hidden max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+            <!-- Studio Top Bar -->
+            <div class="paper-card p-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 id="studioRoomName" class="font-display font-bold text-xl sm:text-2xl">Late Night Brainrot Booth</h2>
+                            <span class="bg-sage/60 border border-espresso font-mono text-[11px] px-2 py-0.5 rounded">LIVE</span>
                         </div>
-                        <div class="space-y-2">
-                            <label class="flex items-center justify-between">
-                                <span>Horizontal (X)</span>
-                                <input type="range" id="pos-x-range" min="-220" max="220" value="0" oninput="updateStagePosition()" class="w-36 accent-terracotta">
-                            </label>
-                            <label class="flex items-center justify-between">
-                                <span>Vertical (Y)</span>
-                                <input type="range" id="pos-y-range" min="-160" max="160" value="0" oninput="updateStagePosition()" class="w-36 accent-terracotta">
-                            </label>
-                            <label class="flex items-center justify-between">
-                                <span>Zoom / Scale</span>
-                                <input type="range" id="scale-range" min="0.5" max="1.6" step="0.05" value="1" oninput="updateStagePosition()" class="w-36 accent-terracotta">
-                            </label>
+                        <div class="font-mono text-xs text-espresso/75 flex flex-wrap items-center gap-2 mt-0.5">
+                            <span>CODE: <strong id="studioRoomCode" class="text-espresso">FRND88</strong></span>
+                            <span>•</span>
+                            <span id="studioParticipantsCount">3 in booth (2 rotating + Ray)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="copyInviteLink()" class="btn-brutal bg-cream hover:bg-sand text-espresso font-mono text-xs px-3 py-2 flex items-center gap-1.5">
+                        <i data-lucide="link" class="w-3.5 h-3.5"></i>
+                        <span>Copy Invite</span>
+                    </button>
+                    <button onclick="toggleCamera()" id="btnToggleCam" class="btn-brutal bg-sage/60 hover:bg-sage text-espresso font-mono text-xs px-3 py-2 flex items-center gap-1.5">
+                        <i data-lucide="video" class="w-3.5 h-3.5"></i>
+                        <span id="labelToggleCam">Cam: ON</span>
+                    </button>
+                    <button onclick="leaveRoom()" class="btn-brutal bg-terracotta/25 hover:bg-terracotta/40 text-espresso font-mono text-xs px-3 py-2 flex items-center gap-1.5">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Leave</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Studio Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                <!-- LEFT: Interactive Stage & Controls (8 cols) -->
+                <div class="lg:col-span-8 space-y-4">
+
+                    <!-- Stage Frame -->
+                    <div class="paper-card p-3 sm:p-4 relative">
+                        <div class="flex items-center justify-between font-mono text-[11px] text-espresso/75 mb-2">
+                            <span>DRAG YOURSELF ON STAGE TO REPOSITION • OR USE SLIDERS BELOW</span>
+                            <span id="stageStatusBadge" class="bg-butter px-2 py-0.5 rounded border border-espresso text-espresso">READY TO SHOOT</span>
+                        </div>
+
+                        <!-- Interactive Canvas Container -->
+                        <div id="stageWrapper" class="relative w-full aspect-[4/3] bg-sand rounded-xl overflow-hidden border-2 border-espresso select-none touch-none">
+                            <!-- Hidden Video Element for Live Camera -->
+                            <video id="webcamVideo" autoplay playsinline muted class="hidden"></video>
+
+                            <!-- Main Live Render Canvas -->
+                            <canvas id="studioCanvas" class="w-full h-full object-cover block cursor-grab active:cursor-grabbing"></canvas>
+
+                            <!-- Synchronized Countdown Overlay -->
+                            <div id="countdownOverlay" class="hidden absolute inset-0 bg-espresso/45 backdrop-blur-[2px] flex flex-col items-center justify-center z-20 pointer-events-none">
+                                <div id="countdownNumber" class="font-display font-bold text-7xl sm:text-9xl text-butter drop-shadow-[4px_4px_0px_#51463D] transition-transform duration-150">
+                                    3
+                                </div>
+                                <div id="countdownSubtext" class="font-mono text-xs sm:text-sm bg-cream text-espresso px-3 py-1 rounded-full border-2 border-espresso mt-2">
+                                    Synchronizing shutter across all friends...
+                                </div>
+                            </div>
+
+                            <!-- Multi-shot Progress Pill -->
+                            <div id="multiShotBadge" class="hidden absolute top-3 left-3 z-10 bg-terracotta text-cream font-mono text-xs px-3 py-1 rounded-full border-2 border-espresso shadow-hardSm">
+                                Shot 1 of 4
+                            </div>
+                        </div>
+
+                        <!-- Position & Scale Controls -->
+                        <div class="mt-4 pt-3 border-t border-dashed border-espresso/30 grid grid-cols-1 sm:grid-cols-3 gap-3 items-center font-mono text-xs">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label for="posXSlider">Move Left / Right (X)</label>
+                                    <span id="posXVal">0%</span>
+                                </div>
+                                <input id="posXSlider" type="range" min="-40" max="40" value="0" oninput="updateUserTransform()" class="w-full accent-[#D88772]" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label for="posYSlider">Move Up / Down (Y)</label>
+                                    <span id="posYVal">0%</span>
+                                </div>
+                                <input id="posYSlider" type="range" min="-35" max="35" value="0" oninput="updateUserTransform()" class="w-full accent-[#D88772]" />
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <label for="scaleSlider">Your Size / Zoom</label>
+                                    <span id="scaleVal">100%</span>
+                                </div>
+                                <input id="scaleSlider" type="range" min="55" max="165" value="100" oninput="updateUserTransform()" class="w-full accent-[#D88772]" />
+                            </div>
+                        </div>
+
+                        <div class="mt-2.5 flex items-center justify-between">
+                            <button onclick="resetUserTransform()" class="font-mono text-[11px] underline text-espresso/80 hover:text-espresso">
+                                Reset Position & Size
+                            </button>
+                            <span class="font-mono text-[11px] text-espresso/70">Tip: Drag directly inside the photo box to move yourself</span>
                         </div>
                     </div>
 
-                    <!-- Background Removal & Shared Scene -->
-                    <div class="paper-card p-4 rounded-2xl bg-cream space-y-3">
+                    <!-- Primary Capture Bar -->
+                    <div class="paper-card p-4 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label class="font-mono text-xs text-espresso/80">Shots:</label>
+                            <select id="shotCountSelect" class="bg-cream border border-espresso rounded-lg px-2.5 py-2 font-mono text-xs">
+                                <option value="1">1 Photo (Single)</option>
+                                <option value="4" selected>4 Photos (Classic Strip)</option>
+                                <option value="6">6 Photos (Long Strip)</option>
+                            </select>
+
+                            <label class="font-mono text-xs text-espresso/80 ml-1">Timer:</label>
+                            <select id="countdownSelect" class="bg-cream border border-espresso rounded-lg px-2.5 py-2 font-mono text-xs">
+                                <option value="3" selected>3 sec</option>
+                                <option value="5">5 sec</option>
+                                <option value="0">Instant (0s)</option>
+                            </select>
+                        </div>
+
+                        <button id="btnCapturePhoto" onclick="startSynchronizedCapture()" class="btn-brutal bg-terracotta hover:bg-[#cc7862] text-cream font-display font-bold text-base px-6 py-3 flex items-center gap-2">
+                            <i data-lucide="camera" class="w-5 h-5"></i>
+                            <span>TAKE PHOTO</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RIGHT: Scenes, Special Editions, Filters & Friends (4 cols) -->
+                <div class="lg:col-span-4 space-y-4">
+
+                    <!-- Background Removal & Scene Selector -->
+                    <div class="paper-card p-4 space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold uppercase text-espresso">2. Background Removal</span>
-                            <button id="bg-toggle-btn" onclick="toggleBackgroundRemoval()" class="font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso bg-sand text-espresso/75">
-                                OFF (FULL CAM)
+                            <h3 class="font-display font-bold text-base">Background & Special Editions</h3>
+                            <button id="btnBgRemove" onclick="toggleBackgroundRemoval()" class="font-mono text-[11px] px-2.5 py-1 rounded-full border border-espresso bg-sage/60 hover:bg-sage transition-colors">
+                                BG Cutout: ON
                             </button>
                         </div>
-                        <p class="text-[11px] text-espresso/70 leading-snug">
-                            Turn ON to cut out your room background and place yourself inside a shared scene.
+
+                        <p class="font-mono text-[11px] text-espresso/70 leading-snug">
+                            Includes special edition <strong>Anime</strong> and <strong>Spider-Man</strong> scenes plus classic backdrops.
                         </p>
 
-                        <div class="pt-1">
-                            <label class="font-bold block mb-1 uppercase">3. Scene / Special Edition</label>
-                            <select id="select-scene" onchange="changeScene(this.value)" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold">
-                                <option value="studio">Warm Analog Studio</option>
-                                <option value="anime">⚡ Anime Special Edition</option>
-                                <option value="spidey">🕷️ Spider-Man Comic Edition</option>
-                                <option value="cafe">Vintage Parisian Café</option>
-                                <option value="space">Outer Space Stars</option>
-                                <option value="beach">Sunset Beach Vacation</option>
-                            </select>
+                        <div id="sceneGrid" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                            <!-- Populated by JS -->
                         </div>
+
+                        <!-- Custom Background Upload -->
+                        <label class="block cursor-pointer bg-sand/70 hover:bg-sand border border-dashed border-espresso rounded-lg p-2.5 text-center font-mono text-xs">
+                            <span>+ Upload Custom Background Image</span>
+                            <input type="file" accept="image/*" onchange="handleCustomBgUpload(event)" class="hidden" />
+                        </label>
                     </div>
 
-                    <!-- Photo Strip Mode & Filter -->
-                    <div class="paper-card p-4 rounded-2xl bg-cream space-y-3">
-                        <div>
-                            <label class="font-bold block mb-1 uppercase">4. Photo Strip Mode</label>
-                            <select id="select-capture-mode" onchange="changeCaptureMode(this.value)" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold">
-                                <option value="1">Single Group Frame (1 Shot)</option>
-                                <option value="4">Classic Photo Strip (4 Shots)</option>
-                                <option value="6">Extended Booth Strip (6 Shots)</option>
-                            </select>
-                        </div>
+                    <!-- Photo Filters & Layout -->
+                    <div class="paper-card p-4 space-y-3">
+                        <h3 class="font-display font-bold text-base">Filter & Strip Template</h3>
 
-                        <div>
-                            <label class="font-bold block mb-1 uppercase">5. Film Filter</label>
-                            <div class="grid grid-cols-2 gap-1.5">
-                                <button onclick="setFilter('filter-warm')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">Warm Film</button>
-                                <button onclick="setFilter('filter-disposable')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">Disposable</button>
-                                <button onclick="setFilter('filter-bw')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">B&W Noir</button>
-                                <button onclick="setFilter('filter-none')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">Natural</button>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block font-mono text-[11px] text-espresso/75 mb-1">Filter</label>
+                                <select id="filterSelect" onchange="updateCurrentFilter()" class="w-full bg-cream border border-espresso rounded-lg px-2.5 py-2 font-mono text-xs">
+                                    <option value="none">No Filter</option>
+                                    <option value="warm" selected>Warm Film</option>
+                                    <option value="disposable">Disposable Cam</option>
+                                    <option value="y2k">2000s Digital</option>
+                                    <option value="bw">Black & White</option>
+                                    <option value="softflash">Soft Flash</option>
+                                    <option value="washed">Washed Out</option>
+                                    <option value="vintagepaper">Vintage Paper</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block font-mono text-[11px] text-espresso/75 mb-1">Layout</label>
+                                <select id="layoutSelect" class="w-full bg-cream border border-espresso rounded-lg px-2.5 py-2 font-mono text-xs">
+                                    <option value="strip" selected>Photobooth Strip</option>
+                                    <option value="grid">4-Frame Grid</option>
+                                    <option value="scrapbook">Scrapbook Collage</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </section>
-
-        <!-- ========================================== -->
-        <!-- 3. DARKROOM DEVELOPING SEQUENCE VIEW       -->
-        <!-- ========================================== -->
-        <section id="view-developing" class="hidden max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
-            <div class="paper-card p-8 rounded-3xl bg-cream space-y-6">
-                <span class="inline-block font-mono text-xs font-bold bg-butter px-3 py-1 rounded-full border border-espresso animate-pulse">
-                    DARKROOM PROCESSING
-                </span>
-                <h2 class="font-display text-3xl font-bold uppercase text-espresso">Developing your strip...</h2>
-
-                <div class="max-w-sm mx-auto p-3 bg-vanilla border-2 border-espresso rounded-2xl shadow-inner">
-                    <img id="developing-img-preview" src="" alt="Developing preview" class="w-full h-56 object-cover rounded-xl blur-md opacity-40 transition-all duration-1000">
-                </div>
-
-                <p id="developing-status-text" class="font-hand text-2xl font-bold text-terracotta">
-                    "Developing questionable decisions..."
-                </p>
-
-                <button onclick="finishDevelopingImmediately()" class="paper-button-secondary px-5 py-2 rounded-xl font-mono text-xs">
-                    Skip Animation →
-                </button>
-            </div>
-        </section>
-
-        <!-- ========================================== -->
-        <!-- 4. FINAL PHOTO RESULT & EXPORT VIEW        -->
-        <!-- ========================================== -->
-        <section id="view-result" class="hidden max-w-5xl mx-auto px-4 md:px-8 py-10">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-                
-                <!-- Composite Strip Display -->
-                <div class="md:col-span-7 flex justify-center">
-                    <div class="paper-card p-4 rounded-3xl bg-sand shadow-2xl">
-                        <canvas id="final-composite-canvas" class="max-w-full h-auto rounded-xl border-2 border-espresso"></canvas>
-                    </div>
-                </div>
-
-                <!-- Download & Diary Actions -->
-                <div class="md:col-span-5 space-y-5">
-                    <div class="paper-card p-6 rounded-3xl bg-cream space-y-4">
-                        <span class="font-mono text-xs font-bold text-sage uppercase">● READY FOR THE ARCHIVES</span>
-                        <h2 class="font-display text-3xl font-bold uppercase text-espresso leading-tight">
-                            Look at you guys.
-                        </h2>
-                        <p class="text-sm text-espresso/80">
-                            Your synchronized photo strip is developed and ready. Download the high-resolution PNG or stick it directly into your FriendsBooth Diary.
-                        </p>
-
-                        <div class="space-y-3 pt-2">
-                            <button onclick="downloadCompositePhoto()" class="paper-button w-full py-3.5 rounded-2xl text-base flex items-center justify-center gap-2">
-                                <i data-lucide="download" class="w-5 h-5"></i>
-                                <span>DOWNLOAD PHOTO (PNG)</span>
+                    <!-- Friends Roster (2 Rotating + Constant Ray) -->
+                    <div class="paper-card p-4 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="font-display font-bold text-base">Friends In Booth</h3>
+                            <button onclick="rotateNamesAndPlaces()" class="font-mono text-[11px] underline text-terracotta hover:text-espresso">
+                                Shuffle Now
                             </button>
+                        </div>
 
-                            <button onclick="stickPhotoToDiary()" class="paper-button-secondary w-full py-3 rounded-2xl text-sm flex items-center justify-center gap-2">
-                                <i data-lucide="book-heart" class="w-4 h-4 text-terracotta"></i>
-                                <span>STICK IN SCRAPBOOK DIARY</span>
-                            </button>
+                        <div class="space-y-2 font-mono text-xs">
+                            <div class="flex items-center justify-between bg-cream border border-espresso/40 rounded-lg px-3 py-2">
+                                <div>
+                                    <span id="studioFriend1Name" class="font-bold text-espresso">Bhav</span>
+                                    <span class="text-espresso/65 ml-1" id="studioFriend1Loc">• Bengaluru, Karnataka</span>
+                                </div>
+                                <span class="text-[10px] bg-butter px-1.5 py-0.5 rounded border border-espresso/30">READY</span>
+                            </div>
 
-                            <button onclick="retakePhoto()" class="w-full py-2.5 font-mono text-xs font-bold text-espresso/75 hover:text-espresso underline">
-                                ← Back to Booth & Retake
-                            </button>
+                            <div class="flex items-center justify-between bg-cream border border-espresso/40 rounded-lg px-3 py-2">
+                                <div>
+                                    <span id="studioFriend2Name" class="font-bold text-espresso">Tixiee</span>
+                                    <span class="text-espresso/65 ml-1" id="studioFriend2Loc">• Tokyo, Japan</span>
+                                </div>
+                                <span class="text-[10px] bg-butter px-1.5 py-0.5 rounded border border-espresso/30">READY</span>
+                            </div>
+
+                            <div class="flex items-center justify-between bg-sage/30 border border-espresso rounded-lg px-3 py-2">
+                                <div>
+                                    <span class="font-bold text-espresso">Ray</span>
+                                    <span class="text-espresso/75 ml-1" id="studioRayLoc">• Jaipur, Rajasthan</span>
+                                </div>
+                                <span class="text-[10px] bg-terracotta text-cream px-1.5 py-0.5 rounded">ALWAYS HERE</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ========================================== -->
-        <!-- 5. INTERACTIVE SCRAPBOOK DIARY VIEW        -->
-        <!-- ========================================== -->
-        <section id="view-diary" class="hidden max-w-4xl mx-auto px-4 py-10 space-y-6">
-            <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- ========================================================= -->
+        <!-- VIEW 3: DEVELOPING & FINAL PHOTO STRIP RESULT               -->
+        <!-- ========================================================= -->
+        <section id="view-result" class="hidden max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+            <div class="paper-card p-4 sm:p-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <span class="font-mono text-xs font-bold text-terracotta uppercase">THE ARCHIVES</span>
-                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Friends Scrapbook Diary</h2>
+                    <span class="font-mono text-xs uppercase tracking-widest text-terracotta">Darkroom Output</span>
+                    <h2 id="resultTitle" class="font-display font-bold text-2xl sm:text-3xl mt-0.5">Developing your strip...</h2>
+                    <p id="resultSubtitle" class="font-mono text-xs text-espresso/75 mt-1">Collecting frames & composing template</p>
                 </div>
-                <button onclick="addDiaryPage()" class="paper-button px-4 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    <span>ADD NEW PAGE</span>
-                </button>
+
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button id="btnSkipDevelop" onclick="skipDevelopmentAnimation()" class="btn-brutal bg-butter hover:bg-[#dfc062] text-espresso font-mono text-xs px-3.5 py-2.5">
+                        Skip Developing
+                    </button>
+                    <button onclick="backToStudio()" class="btn-brutal bg-cream hover:bg-sand text-espresso font-mono text-xs px-3.5 py-2.5 flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>Shoot Again</span>
+                    </button>
+                    <button id="btnStickToDiary" onclick="stickResultIntoDiary()" class="btn-brutal bg-sage/80 hover:bg-sage text-espresso font-mono text-xs font-medium px-4 py-2.5 flex items-center gap-1.5">
+                        <i data-lucide="bookmark-plus" class="w-4 h-4"></i>
+                        <span>Stick Into Diary</span>
+                    </button>
+                    <button id="btnDownloadStrip" onclick="downloadFinalStrip()" class="btn-brutal bg-terracotta hover:bg-[#cc7862] text-cream font-mono text-xs font-medium px-4 py-2.5 flex items-center gap-1.5">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Download PNG</span>
+                    </button>
+                </div>
             </div>
 
-            <!-- Book Page Container -->
-            <div id="diary-book-wrapper" class="flex justify-center"></div>
+            <!-- Output Preview Container -->
+            <div class="paper-card p-5 sm:p-8 flex flex-col items-center justify-center bg-sand/60">
+                <div id="developingStatusBox" class="mb-4 font-hand text-2xl text-espresso bg-cream px-4 py-1.5 rounded-xl border border-espresso shadow-hardSm">
+                    "Developing questionable decisions..."
+                </div>
 
-            <!-- Page Flip Controls -->
-            <div class="flex items-center justify-between max-w-xl mx-auto pt-2 font-mono text-xs">
-                <button onclick="prevDiaryPage()" class="paper-button-secondary px-4 py-2.5 rounded-xl font-bold">
-                    ← PREVIOUS PAGE
-                </button>
-                <span id="diary-page-indicator" class="font-bold text-espresso">PAGE 1 OF 4</span>
-                <button onclick="nextDiaryPage()" class="paper-button-secondary px-4 py-2.5 rounded-xl font-bold">
-                    NEXT PAGE →
-                </button>
+                <!-- Final Composed Image Element (guaranteed real data URL) -->
+                <img id="finalComposedImage" alt="Composed FriendsBooth Strip" class="max-h-[75vh] w-auto rounded-lg border-2 border-espresso shadow-hard developing-photo bg-cream" />
+
+                <!-- Hidden High-Res Composition Canvas -->
+                <canvas id="compositionCanvas" class="hidden"></canvas>
             </div>
         </section>
 
     </main>
 
-    <!-- COUNTDOWN OVERLAY MODAL -->
-    <div id="countdown-modal" class="fixed inset-0 z-50 bg-espresso/75 backdrop-blur-sm hidden flex flex-col items-center justify-center text-cream p-4">
-        <p id="countdown-subtext" class="font-mono text-sm tracking-widest uppercase text-butter font-bold mb-2">
-            SYNCHRONIZED CAPTURE IN
-        </p>
-        <div id="countdown-number" class="font-display font-extrabold text-8xl sm:text-9xl text-cream drop-shadow-[6px_6px_0px_#D88772] scale-110 transition-transform">
-            3
-        </div>
-        <p class="font-hand text-3xl text-butter mt-4">"POSE, IDIOT!"</p>
-    </div>
-
-    <!-- CREATE & JOIN BOOTH MODALS -->
-    <div id="create-modal" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full space-y-5 bg-cream relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta font-bold text-xl">✕</button>
-            <div>
-                <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">NEW SESSION</span>
-                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Create a Photo Booth</h3>
-            </div>
-            <div class="space-y-3 font-mono text-xs">
-                <div>
-                    <label class="font-bold block mb-1">BOOTH NAME</label>
-                    <input type="text" id="input-room-name" value="Abrish's Squad" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold focus:outline-none">
-                </div>
-                <div>
-                    <label class="font-bold block mb-1">YOUR DISPLAY NAME</label>
-                    <input type="text" id="input-user-name" value="Abrish" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold focus:outline-none">
-                </div>
-                <div>
-                    <label class="font-bold block mb-1">INITIAL SCENE</label>
-                    <select id="input-room-scene" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold">
-                        <option value="studio">Warm Analog Studio</option>
-                        <option value="anime">⚡ Anime Special Edition</option>
-                        <option value="spidey">🕷️ Spider-Man Comic Edition</option>
-                        <option value="cafe">Vintage Parisian Café</option>
-                        <option value="space">Outer Space Stars</option>
-                    </select>
-                </div>
-            </div>
-            <button onclick="submitCreateRoom()" class="paper-button w-full py-3 rounded-xl font-bold text-base">
-                LAUNCH STUDIO →
-            </button>
-        </div>
-    </div>
-
-    <div id="join-modal" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full space-y-5 bg-cream relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta font-bold text-xl">✕</button>
-            <div>
-                <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">JOIN FRIENDS</span>
-                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Enter Booth Code</h3>
-            </div>
-            <div class="space-y-3 font-mono text-xs">
-                <div>
-                    <label class="font-bold block mb-1">6-DIGIT ROOM CODE</label>
-                    <input type="text" id="join-room-code" placeholder="e.g. RAY123" maxlength="6" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold uppercase tracking-widest focus:outline-none">
-                </div>
-                <div>
-                    <label class="font-bold block mb-1">YOUR DISPLAY NAME</label>
-                    <input type="text" id="join-user-name" value="Friend" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold focus:outline-none">
-                </div>
-            </div>
-            <button onclick="submitJoinRoom()" class="paper-button w-full py-3 rounded-xl font-bold text-base">
-                ENTER BOOTH →
-            </button>
-        </div>
-    </div>
-
     <!-- FOOTER -->
-    <footer class="border-t-2 border-espresso/20 py-6 px-4 bg-vanilla mt-12">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-espresso/70">
-            <div class="flex items-center gap-2">
-                <span class="font-display font-bold text-espresso text-lg">FriendsBooth.io</span>
-                <span>— Distance is stupid. Let's take a picture.</span>
-            </div>
-            <div class="font-hand text-lg font-bold text-terracotta">
-                east or west Abrish is the best • Ray (@the_rayaan_k)
-            </div>
+    <footer class="border-t-2 border-espresso bg-cream/80 mt-16 py-6 px-4 sm:px-6">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs text-espresso/80">
+            <div>FriendsBooth.io — Different places, same people</div>
+            <div>The Internet Friends Photo Club • Distance is stupid. Let's take a picture.</div>
         </div>
     </footer>
 
-    <!-- MAIN APP SCRIPT -->
+    <!-- ========================================================= -->
+    <!-- CREATE BOOTH MODAL                                        -->
+    <!-- ========================================================= -->
+    <div id="createModal" class="fixed inset-0 z-50 hidden bg-espresso/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+        <div class="paper-card max-w-md w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-espresso/20 pb-3">
+                <h3 class="font-display font-bold text-xl">Create a Photo Booth</h3>
+                <button onclick="closeCreateModal()" class="p-1 rounded-lg hover:bg-sand">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="block mb-1 text-espresso/80">Booth Name</label>
+                    <input id="createBoothName" type="text" value="Late Night Chaos Booth" class="w-full bg-cream border border-espresso rounded-lg px-3 py-2 text-sm font-sans" />
+                </div>
+
+                <div>
+                    <label class="block mb-1 text-espresso/80">Your Name (defaults to rotating friend name)</label>
+                    <input id="createHostName" type="text" placeholder="Enter name" class="w-full bg-cream border border-espresso rounded-lg px-3 py-2 text-sm font-sans" />
+                </div>
+
+                <div class="grid grid-cols-2 gap-2.5">
+                    <div>
+                        <label class="block mb-1 text-espresso/80">Default Shots</label>
+                        <select id="createShotCount" class="w-full bg-cream border border-espresso rounded-lg px-2.5 py-2">
+                            <option value="1">1 Photo</option>
+                            <option value="4" selected>4-Photo Strip</option>
+                            <option value="6">6-Photo Strip</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-espresso/80">Starting Scene</label>
+                        <select id="createSceneSelect" class="w-full bg-cream border border-espresso rounded-lg px-2.5 py-2">
+                            <option value="anime" selected>Anime Edition</option>
+                            <option value="spiderman">Spider-Man Edition</option>
+                            <option value="cafe">Vintage Cafe</option>
+                            <option value="space">Outer Space</option>
+                            <option value="motel">Retro Motel</option>
+                            <option value="arcade">Japanese Arcade</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2.5">
+                <button onclick="closeCreateModal()" class="btn-brutal bg-cream px-4 py-2 font-mono text-xs">Cancel</button>
+                <button onclick="launchCreatedBooth()" class="btn-brutal bg-terracotta text-cream font-display font-bold text-sm px-5 py-2">Enter Booth</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- JOIN BOOTH MODAL                                          -->
+    <!-- ========================================================= -->
+    <div id="joinModal" class="fixed inset-0 z-50 hidden bg-espresso/50 backdrop-blur-[2px] flex items-center justify-center p-4">
+        <div class="paper-card max-w-md w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-espresso/20 pb-3">
+                <h3 class="font-display font-bold text-xl">Join Your Friends</h3>
+                <button onclick="closeJoinModal()" class="p-1 rounded-lg hover:bg-sand">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="block mb-1 text-espresso/80">Room Code</label>
+                    <input id="joinRoomCode" type="text" placeholder="e.g. FRND88" class="w-full bg-cream border border-espresso rounded-lg px-3 py-2 uppercase font-mono text-sm" />
+                </div>
+                <div>
+                    <label class="block mb-1 text-espresso/80">Your Display Name</label>
+                    <input id="joinDisplayName" type="text" placeholder="Enter name" class="w-full bg-cream border border-espresso rounded-lg px-3 py-2 font-sans text-sm" />
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2.5">
+                <button onclick="closeJoinModal()" class="btn-brutal bg-cream px-4 py-2 font-mono text-xs">Cancel</button>
+                <button onclick="launchJoinedBooth()" class="btn-brutal bg-terracotta text-cream font-display font-bold text-sm px-5 py-2">Join Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- APPLICATION LOGIC                                         -->
+    <!-- ========================================================= -->
     <script>
-        // GLOBAL APP STATE
+        // 1. FRIEND ROSTER (All requested names, "wini" instead of "wini da pooh", Ray always present)
+        const FRIEND_NAMES = [
+            'Bhav', 'Tixiee', 'Dig', 'Cookie', 'Abbuu Dabbuu', 'Ashuu', 'Rivy',
+            'Sanana', 'Abhi', 'yohohoo', 'Subie Negi', 'Pippo', 'ACM', 'Anikiwi',
+            'Shaurya', 'wini', 'vivi', 'thugger', 'Abrish', 'suvi', 'jayuu',
+            'gaurav', 'jayash', 'neerav', 'Shion', 'sameedd'
+        ];
+
+        // Indian states & international countries / cities
+        const LOCATIONS = [
+            'Bengaluru, Karnataka', 'Mumbai, Maharashtra', 'Jaipur, Rajasthan',
+            'Kochi, Kerala', 'Guwahati, Assam', 'Bhopal, Madhya Pradesh',
+            'Chandigarh, Punjab', 'Bhubaneswar, Odisha', 'Shimla, Himachal Pradesh',
+            'Tokyo, Japan', 'Seoul, South Korea', 'London, United Kingdom',
+            'Toronto, Canada', 'Berlin, Germany', 'Melbourne, Australia',
+            'Reykjavik, Iceland', 'Singapore', 'New York, United States'
+        ];
+
+        // Special Edition & Classic Scenes
+        const SCENES = [
+            { id: 'anime', name: 'Anime Edition', tag: 'SPECIAL', bg1: '#1E293B', bg2: '#3B0764', accent: '#F472B6' },
+            { id: 'spiderman', name: 'Spider-Man Edition', tag: 'SPECIAL', bg1: '#991B1B', bg2: '#1D4ED8', accent: '#FACC15' },
+            { id: 'cafe', name: 'Vintage Cafe', tag: 'WARM', bg1: '#6E473B', bg2: '#A78A7F', accent: '#E9CB73' },
+            { id: 'space', name: 'Outer Space', tag: 'COSMIC', bg1: '#0F172A', bg2: '#1E1B4B', accent: '#A8BAC4' },
+            { id: 'motel', name: 'Retro Motel', tag: 'NEON-NOIR', bg1: '#3F4E4F', bg2: '#2C3639', accent: '#D88772' },
+            { id: 'arcade', name: 'Japanese Arcade', tag: 'RETRO', bg1: '#1F2937', bg2: '#4C1D95', accent: '#A5B494' },
+            { id: 'beach', name: 'Beach Vacation', tag: 'SUNNY', bg1: '#0284C7', bg2: '#7DD3FC', accent: '#E9CB73' },
+            { id: 'greenhouse', name: 'Greenhouse', tag: 'BOTANICAL', bg1: '#2F4838', bg2: '#52796F', accent: '#A5B494' }
+        ];
+
+        const DEVELOPING_QUOTES = [
+            '"Developing questionable decisions..."',
+            '"Checking if anyone blinked..."',
+            '"Collecting pixels across time zones..."',
+            '"Making friendship look JPEG-shaped..."'
+        ];
+
+        const WISHLIST_DEFAULT_NAMES = [
+            'Bhav', 'Tixiee', 'Dig', 'Cookie', 'Abbuu Dabbuu', 'Ashuu',
+            'Rivy', 'Sanana', 'Abhi', 'yohohoo', 'Subie Negi', 'Pippo',
+            'ACM', 'Anikiwi', 'Shaurya', 'wini', 'vivi', 'thugger'
+        ];
+
+        // 2. APPLICATION STATE
         const state = {
             currentView: 'landing',
-            roomCode: 'RAY123',
-            roomName: 'Friends Club',
-            userName: 'Abrish',
-            isReady: false,
-            localStream: null,
-            showVirtualFriend: false,
-            cameraActive: false,
-            segmentationActive: false, // Default OFF so full webcam renders immediately & reliably
-            selectedScene: 'studio',
-            selectedFilter: 'filter-warm',
-            captureMode: 1,
-            capturedPoses: [],
-            stagePos: { x: 0, y: 0, scale: 1 },
-            diary: {
-                currentPage: 0,
-                pages: [
-                    { id: 1, title: 'My Friends Memories', text: 'Stuck our best photobooth shots here! Distance is stupid.', font: 'font-hand', attachedPhoto: null, photoScale: 1, photoRotate: -2 },
-                    { id: 2, title: 'Late Night VC Reunion', text: 'We took this across timezones. Best moment ever!', font: 'font-hand', attachedPhoto: null, photoScale: 1, photoRotate: 2 }
-                ],
-                checklist: [
-                    { name: 'Bhav', done: true },
-                    { name: 'Tixiee', done: true },
-                    { name: 'Dig', done: false },
-                    { name: 'Cookie', done: true },
-                    { name: 'Abbuu Dabbuu', done: false },
-                    { name: 'Ashuu', done: true },
-                    { name: 'Rivy', done: false },
-                    { name: 'Sanana', done: false },
-                    { name: 'Abhi', done: true },
-                    { name: 'yohohoo', done: false },
-                    { name: 'Subie Negi', done: false },
-                    { name: 'Pippo', done: false },
-                    { name: 'ACM', done: true },
-                    { name: 'Anikiwi', done: false },
-                    { name: 'Shaurya', done: false },
-                    { name: 'wini da pooh', done: true },
-                    { name: 'vivi', done: false },
-                    { name: 'thugger', done: false }
-                ]
-            }
+            roomName: 'Late Night Chaos Booth',
+            roomCode: 'FRND88',
+            activeFriend1: 'Bhav',
+            activeFriend2: 'Tixiee',
+            loc1: 'Bengaluru, Karnataka',
+            loc2: 'Tokyo, Japan',
+            locRay: 'Jaipur, Rajasthan',
+            cameraEnabled: true,
+            cameraReady: false,
+            bgRemovalEnabled: true,
+            selectedScene: 'anime',
+            customBgImage: null,
+            selectedFilter: 'warm',
+            selectedLayout: 'strip',
+            shotCount: 4,
+            countdownSeconds: 3,
+            userPosX: 0,      // percentage offset (-40 to 40)
+            userPosY: 0,      // percentage offset (-35 to 35)
+            userScale: 1.0,   // scale multiplier (0.55 to 1.65)
+            capturedFrames: [],
+            finalImageDataUrl: '',
+            isCapturing: false,
+            isDraggingOnStage: false,
+            dragStartX: 0,
+            dragStartY: 0,
+            dragOrigX: 0,
+            dragOrigY: 0,
+            diaryCurrentPage: 0,
+            diaryPages: [],
+            wishlistItems: []
         };
 
-        // DOM LOAD INITIALIZATION
-        window.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
+        let mediaStream = null;
+        let renderLoopId = null;
+        let nameRotationIndex = 0;
+
+        // 3. INITIALIZATION & STORAGE
+        function initApp() {
+            loadDiaryData();
+            rotateNamesAndPlaces();
+            renderSceneGrid();
             renderDiaryBook();
+            refreshIcons();
 
-            // Check if URL has ?room=CODE
-            const params = new URLSearchParams(window.location.search);
-            const roomParam = params.get('room');
-            if (roomParam) {
-                document.getElementById('join-room-code').value = roomParam.toUpperCase();
-                openJoinModal();
+            // Rotate friend names & locations periodically
+            setInterval(() => {
+                rotateNamesAndPlaces();
+            }, 3200);
+        }
+
+        function refreshIcons() {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
             }
-        });
+        }
 
-        // VIEW ROUTER
-        function showView(viewName) {
+        function showToast(msg) {
+            const banner = document.getElementById('toastBanner');
+            const text = document.getElementById('toastText');
+            if (!banner || !text) return;
+            text.textContent = msg;
+            banner.classList.remove('hidden');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 2800);
+        }
+
+        // 4. NAME & LOCATION ROTATION (2 changing friends + Ray constant)
+        function rotateNamesAndPlaces() {
+            const len = FRIEND_NAMES.length;
+            const n1 = FRIEND_NAMES[nameRotationIndex % len];
+            let n2 = FRIEND_NAMES[(nameRotationIndex + 1) % len];
+            if (n2 === n1) n2 = FRIEND_NAMES[(nameRotationIndex + 2) % len];
+            nameRotationIndex = (nameRotationIndex + 1) % len;
+
+            const l1 = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+            let l2 = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+            if (l2 === l1) l2 = LOCATIONS[(LOCATIONS.indexOf(l1) + 3) % LOCATIONS.length];
+            const lRay = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+
+            state.activeFriend1 = n1;
+            state.activeFriend2 = n2;
+            state.loc1 = l1;
+            state.loc2 = l2;
+            state.locRay = lRay;
+
+            // Update Hero Strip
+            setText('heroName1', n1);
+            setText('heroName2', n2);
+            setText('heroLoc1', l1);
+            setText('heroLoc2', l2);
+            setText('heroLocRay', lRay);
+
+            // Update Studio Roster
+            setText('studioFriend1Name', n1);
+            setText('studioFriend2Name', n2);
+            setText('studioFriend1Loc', '• ' + l1);
+            setText('studioFriend2Loc', '• ' + l2);
+            setText('studioRayLoc', '• ' + lRay);
+
+            // If name inputs are empty, keep placeholder updated with rotating names
+            const hostInput = document.getElementById('createHostName');
+            const joinInput = document.getElementById('joinDisplayName');
+            if (hostInput && !hostInput.value.trim()) hostInput.placeholder = n1;
+            if (joinInput && !joinInput.value.trim()) joinInput.placeholder = n2;
+        }
+
+        function setText(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
+
+        // 5. NAVIGATION & MODALS
+        function navigateTo(viewName) {
             state.currentView = viewName;
-            const views = ['landing', 'room', 'developing', 'result', 'diary'];
-            views.forEach(v => {
-                const el = document.getElementById(`view-${v}`);
-                if (el) {
-                    if (v === viewName) el.classList.remove('hidden');
-                    else el.classList.add('hidden');
-                }
-            });
+            const landing = document.getElementById('view-landing');
+            const studio = document.getElementById('view-studio');
+            const result = document.getElementById('view-result');
+
+            if (landing) landing.classList.toggle('hidden', viewName !== 'landing');
+            if (studio) studio.classList.toggle('hidden', viewName !== 'studio');
+            if (result) result.classList.toggle('hidden', viewName !== 'result');
+
+            if (viewName === 'studio') {
+                startCameraAndLoop();
+            } else {
+                stopCameraLoop();
+            }
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            if (viewName === 'room') startStudioStage();
-            if (viewName === 'diary') renderDiaryBook();
+            refreshIcons();
         }
 
-        function scrollToHowItWorks() {
-            showView('landing');
-            setTimeout(() => {
-                const el = document.getElementById('how-it-works-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+        function scrollToSection(id) {
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // MODALS & ROOM SUBMISSION
         function openCreateModal() {
-            document.getElementById('create-modal').classList.remove('hidden');
+            const m = document.getElementById('createModal');
+            if (m) m.classList.remove('hidden');
+        }
+
+        function closeCreateModal() {
+            const m = document.getElementById('createModal');
+            if (m) m.classList.add('hidden');
         }
 
         function openJoinModal() {
-            document.getElementById('join-modal').classList.remove('hidden');
+            const m = document.getElementById('joinModal');
+            if (m) m.classList.remove('hidden');
         }
 
-        function closeModals() {
-            document.getElementById('create-modal').classList.add('hidden');
-            document.getElementById('join-modal').classList.add('hidden');
+        function closeJoinModal() {
+            const m = document.getElementById('joinModal');
+            if (m) m.classList.add('hidden');
         }
 
-        function submitCreateRoom() {
-            const rName = document.getElementById('input-room-name').value.trim() || 'Friends Club';
-            const uName = document.getElementById('input-user-name').value.trim() || 'Abrish';
-            const scene = document.getElementById('input-room-scene').value;
-            
-            state.roomName = rName;
-            state.userName = uName;
-            state.roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            state.selectedScene = scene;
+        function launchCreatedBooth() {
+            const nameInput = document.getElementById('createBoothName');
+            const shotsInput = document.getElementById('createShotCount');
+            const sceneInput = document.getElementById('createSceneSelect');
 
-            document.getElementById('room-header-title').innerText = `ROOM: ${state.roomName}`;
-            document.getElementById('room-header-code').innerText = state.roomCode;
-            document.getElementById('select-scene').value = scene;
+            state.roomName = (nameInput && nameInput.value.trim()) || 'FriendsBooth Session';
+            state.roomCode = 'FRND' + Math.floor(10 + Math.random() * 89);
+            state.shotCount = parseInt((shotsInput && shotsInput.value) || '4', 10);
+            state.selectedScene = (sceneInput && sceneInput.value) || 'anime';
 
-            closeModals();
-            showView('room');
-            showToast(`Booth ${state.roomCode} created!`);
+            const shotSelect = document.getElementById('shotCountSelect');
+            if (shotSelect) shotSelect.value = String(state.shotCount);
+
+            setText('studioRoomName', state.roomName);
+            setText('studioRoomCode', state.roomCode);
+
+            closeCreateModal();
+            renderSceneGrid();
+            navigateTo('studio');
+            showToast('Booth created! Code: ' + state.roomCode);
         }
 
-        function submitJoinRoom() {
-            const code = document.getElementById('join-room-code').value.trim().toUpperCase() || 'RAY123';
-            const uName = document.getElementById('join-user-name').value.trim() || 'Friend';
+        function launchJoinedBooth() {
+            const codeInput = document.getElementById('joinRoomCode');
+            const rawCode = (codeInput && codeInput.value.trim().toUpperCase()) || ('FRND' + Math.floor(10 + Math.random() * 89));
+            state.roomCode = rawCode;
+            state.roomName = 'Room ' + rawCode;
 
-            state.roomCode = code;
-            state.roomName = `Booth #${code}`;
-            state.userName = uName;
+            setText('studioRoomName', state.roomName);
+            setText('studioRoomCode', state.roomCode);
 
-            document.getElementById('room-header-title').innerText = `ROOM: ${state.roomName}`;
-            document.getElementById('room-header-code').innerText = state.roomCode;
-
-            closeModals();
-            showView('room');
-            showToast(`Joined Booth ${state.roomCode}!`);
+            closeJoinModal();
+            navigateTo('studio');
+            showToast('Joined room ' + state.roomCode);
         }
 
-        // ============================================================
-        // ROBUST LIVE STUDIO WEBCAM & COMPOSITE STAGE ENGINE
-        // ============================================================
-        let stageAnimFrame = null;
-        let selfieSegmentation = null;
-        let latestSegmentationMask = null;
-        let isSendingMask = false;
-        let isDraggingStage = false;
-        let stageDragStart = { x: 0, y: 0 };
-
-        const offscreenPersonCanvas = document.createElement('canvas');
-        offscreenPersonCanvas.width = 640;
-        offscreenPersonCanvas.height = 480;
-        const offscreenPersonCtx = offscreenPersonCanvas.getContext('2d');
-
-        async function startStudioStage() {
-            const canvas = document.getElementById('live-stage-canvas');
-            if (!canvas) return;
-
-            // Pointer drag on stage canvas to reposition yourself
-            canvas.onpointerdown = (e) => {
-                isDraggingStage = true;
-                stageDragStart = { x: e.clientX - state.stagePos.x, y: e.clientY - state.stagePos.y };
-                canvas.setPointerCapture(e.pointerId);
-            };
-            canvas.onpointermove = (e) => {
-                if (!isDraggingStage) return;
-                state.stagePos.x = Math.max(-220, Math.min(220, e.clientX - stageDragStart.x));
-                state.stagePos.y = Math.max(-160, Math.min(160, e.clientY - stageDragStart.y));
-                document.getElementById('pos-x-range').value = state.stagePos.x;
-                document.getElementById('pos-y-range').value = state.stagePos.y;
-            };
-            canvas.onpointerup = () => { isDraggingStage = false; };
-
-            await retryCameraAccess();
-
-            if (stageAnimFrame) cancelAnimationFrame(stageAnimFrame);
-            renderStageLoop();
-        }
-
-        async function retryCameraAccess() {
-            const videoEl = document.getElementById('webcam-video');
-            const statusLabel = document.getElementById('cam-status-label');
-            if (!videoEl) return;
-
-            try {
-                if (state.localStream) {
-                    state.localStream.getTracks().forEach(t => t.stop());
-                }
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
-                    audio: false
-                });
-                state.localStream = stream;
-                videoEl.srcObject = stream;
-                await videoEl.play();
-                state.cameraActive = true;
-                if (statusLabel) statusLabel.innerText = '● CAMERA LIVE';
-                initMediaPipeSegmentation();
-            } catch (err) {
-                console.warn('Camera permission or device error:', err);
-                state.cameraActive = false;
-                if (statusLabel) statusLabel.innerText = '⚠ CAMERA BLOCKED / UNAVAILABLE (CLICK ENABLE CAMERA)';
-                showToast('Please allow camera permissions in your browser!');
+        function copyInviteLink() {
+            const url = window.location.origin + window.location.pathname + '?room=' + encodeURIComponent(state.roomCode);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).catch(() => {});
             }
-        }
-
-        function initMediaPipeSegmentation() {
-            try {
-                if (typeof SelfieSegmentation !== 'undefined' && !selfieSegmentation) {
-                    selfieSegmentation = new SelfieSegmentation({
-                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
-                    });
-                    selfieSegmentation.setOptions({ modelSelection: 1 });
-                    selfieSegmentation.onResults((results) => {
-                        latestSegmentationMask = results.segmentationMask;
-                        isSendingMask = false;
-                    });
-                }
-            } catch (e) {
-                console.warn('MediaPipe segmentation unavailable:', e);
-            }
-        }
-
-        function drawSceneBackdropOnCanvas(ctx, w, h, sceneKey) {
-            ctx.save();
-            if (sceneKey === 'anime') {
-                // Warm manga sunset + speedlines
-                const grad = ctx.createLinearGradient(0, 0, w, h);
-                grad.addColorStop(0, '#FDE68A');
-                grad.addColorStop(0.5, '#FCA5A5');
-                grad.addColorStop(1, '#FDBA74');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, w, h);
-
-                // Manga radial lines
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-                ctx.lineWidth = 2;
-                for (let angle = 0; angle < Math.PI * 2; angle += 0.15) {
-                    ctx.beginPath();
-                    ctx.moveTo(w / 2 + Math.cos(angle) * 140, h / 2 + Math.sin(angle) * 140);
-                    ctx.lineTo(w / 2 + Math.cos(angle) * 450, h / 2 + Math.sin(angle) * 450);
-                    ctx.stroke();
-                }
-            } else if (sceneKey === 'spidey') {
-                // Spider-Man comic blue/red halftone backdrop
-                const grad = ctx.createLinearGradient(0, 0, 0, h);
-                grad.addColorStop(0, '#1D4ED8');
-                grad.addColorStop(1, '#1E1B4B');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, w, h);
-
-                ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
-                for (let x = 20; x < w; x += 28) {
-                    for (let y = 20; y < h; y += 28) {
-                        ctx.beginPath();
-                        ctx.arc(x, y, 5, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-            } else if (sceneKey === 'cafe') {
-                ctx.fillStyle = '#D9B99B';
-                ctx.fillRect(0, 0, w, h);
-                ctx.fillStyle = '#F3EBDD';
-                ctx.fillRect(30, 30, w - 60, h - 110);
-            } else if (sceneKey === 'space') {
-                ctx.fillStyle = '#0F172A';
-                ctx.fillRect(0, 0, w, h);
-                ctx.fillStyle = '#FDE047';
-                for (let i = 0; i < 45; i++) {
-                    const sx = (i * 137) % w;
-                    const sy = (i * 89) % h;
-                    ctx.fillRect(sx, sy, 3, 3);
-                }
-            } else if (sceneKey === 'beach') {
-                const grad = ctx.createLinearGradient(0, 0, 0, h);
-                grad.addColorStop(0, '#38BDF8');
-                grad.addColorStop(0.65, '#BAE6FD');
-                grad.addColorStop(0.66, '#FDE68A');
-                grad.addColorStop(1, '#F59E0B');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, w, h);
-            } else {
-                // Warm Analog Studio default
-                ctx.fillStyle = '#E9DFCF';
-                ctx.fillRect(0, 0, w, h);
-            }
-            ctx.restore();
-        }
-
-        function renderStageLoop() {
-            const canvas = document.getElementById('live-stage-canvas');
-            const videoEl = document.getElementById('webcam-video');
-            if (!canvas || state.currentView !== 'room') return;
-
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width;
-            const h = canvas.height;
-
-            // 1. Always paint the selected scene background onto the canvas
-            drawSceneBackdropOnCanvas(ctx, w, h, state.selectedScene);
-
-            // 2. Render Live Webcam Video Feed
-            if (state.cameraActive && videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
-                // Trigger background segmentation asynchronously if toggled ON
-                if (state.segmentationActive && selfieSegmentation && !isSendingMask) {
-                    isSendingMask = true;
-                    selfieSegmentation.send({ image: videoEl }).catch(() => { isSendingMask = false; });
-                }
-
-                offscreenPersonCtx.save();
-                offscreenPersonCtx.clearRect(0, 0, 640, 480);
-                // Mirror webcam horizontally like a real mirror
-                offscreenPersonCtx.translate(640, 0);
-                offscreenPersonCtx.scale(-1, 1);
-
-                if (state.segmentationActive && latestSegmentationMask) {
-                    offscreenPersonCtx.drawImage(latestSegmentationMask, 0, 0, 640, 480);
-                    offscreenPersonCtx.globalCompositeOperation = 'source-in';
-                    offscreenPersonCtx.drawImage(videoEl, 0, 0, 640, 480);
-                    offscreenPersonCtx.globalCompositeOperation = 'source-over';
-                } else {
-                    // Draw full crisp webcam frame so user is ALWAYS visible
-                    offscreenPersonCtx.drawImage(videoEl, 0, 0, 640, 480);
-                }
-                offscreenPersonCtx.restore();
-
-                // Draw onto stage at user's chosen X, Y, and Scale
-                ctx.save();
-                const drawW = (state.segmentationActive ? 520 : 560) * state.stagePos.scale;
-                const drawH = (state.segmentationActive ? 390 : 400) * state.stagePos.scale;
-                const drawX = (w - drawW) / 2 + state.stagePos.x;
-                const drawY = (h - drawH) / 2 + state.stagePos.y;
-
-                ctx.drawImage(offscreenPersonCanvas, drawX, drawY, drawW, drawH);
-
-                // Add crisp photo border when background removal is OFF
-                if (!state.segmentationActive) {
-                    ctx.strokeStyle = '#51463D';
-                    ctx.lineWidth = 4;
-                    ctx.strokeRect(drawX, drawY, drawW, drawH);
-                }
-                ctx.restore();
-            } else {
-                // Clear prompt when camera is off or awaiting permission
-                ctx.save();
-                ctx.fillStyle = '#FBF7F0';
-                ctx.strokeStyle = '#51463D';
-                ctx.lineWidth = 3;
-                ctx.fillRect(w / 2 - 190, h / 2 - 55, 380, 110);
-                ctx.strokeRect(w / 2 - 190, h / 2 - 55, 380, 110);
-                ctx.fillStyle = '#51463D';
-                ctx.font = 'bold 16px "Space Grotesk", sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('CAMERA NOT ACTIVE', w / 2, h / 2 - 12);
-                ctx.font = '12px "DM Mono", monospace';
-                ctx.fillText('Click "Enable Camera" at the top right!', w / 2, h / 2 + 16);
-                ctx.restore();
-            }
-
-            // 3. Optional Remote Friend Preview
-            if (state.showVirtualFriend) {
-                drawSimulatedFriend(ctx, w * 0.76, h * 0.62, 'Ray (Remote)');
-            }
-
-            // 4. Special Edition Overlays (Anime / Spider-Man)
-            if (state.selectedScene === 'anime') {
-                drawAnimeFrameFX(ctx, w, h);
-            } else if (state.selectedScene === 'spidey') {
-                drawSpideyFrameFX(ctx, w, h);
-            }
-
-            // 5. Participant Name Tag
-            ctx.save();
-            ctx.fillStyle = '#FBF7F0';
-            ctx.strokeStyle = '#51463D';
-            ctx.lineWidth = 2;
-            ctx.fillRect(16, h - 42, 180, 26);
-            ctx.strokeRect(16, h - 42, 180, 26);
-            ctx.fillStyle = '#51463D';
-            ctx.font = 'bold 12px "DM Mono", monospace';
-            ctx.textAlign = 'left';
-            ctx.fillText(`● ${state.userName.toUpperCase()}`, 26, h - 25);
-            ctx.restore();
-
-            stageAnimFrame = requestAnimationFrame(renderStageLoop);
-        }
-
-        function drawSimulatedFriend(ctx, cx, cy, label) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.fillStyle = '#A5B494';
-            ctx.strokeStyle = '#51463D';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.roundRect(-55, 20, 110, 95, 20);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = '#E5B887';
-            ctx.beginPath();
-            ctx.arc(0, -25, 38, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            ctx.fillStyle = '#1C1917';
-            ctx.beginPath(); ctx.arc(-12, -25, 4, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(12, -25, 4, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(0, -15, 12, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
-
-            ctx.fillStyle = '#E9CB73';
-            ctx.fillRect(-52, 65, 104, 22);
-            ctx.strokeRect(-52, 65, 104, 22);
-            ctx.fillStyle = '#51463D';
-            ctx.font = 'bold 11px "DM Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(label, 0, 80);
-            ctx.restore();
-        }
-
-        function drawAnimeFrameFX(ctx, w, h) {
-            ctx.save();
-            ctx.strokeStyle = '#18181B';
-            ctx.lineWidth = 10;
-            ctx.strokeRect(5, 5, w - 10, h - 10);
-            ctx.fillStyle = '#E9CB73';
-            ctx.strokeStyle = '#18181B';
-            ctx.lineWidth = 3;
-            ctx.fillRect(w - 145, 18, 125, 36);
-            ctx.strokeRect(w - 145, 18, 125, 36);
-            ctx.fillStyle = '#18181B';
-            ctx.font = 'bold 18px sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('ゴゴゴゴ!!', w - 132, 43);
-            ctx.restore();
-        }
-
-        function drawSpideyFrameFX(ctx, w, h) {
-            ctx.save();
-            ctx.strokeStyle = '#DC2626';
-            ctx.lineWidth = 14;
-            ctx.strokeRect(7, 7, w - 14, h - 14);
-            ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(140, i * 35);
-                ctx.stroke();
-            }
-            ctx.fillStyle = '#FACC15';
-            ctx.strokeStyle = '#000';
-            ctx.lineWidth = 3;
-            ctx.fillRect(20, 20, 105, 34);
-            ctx.strokeRect(20, 20, 105, 34);
-            ctx.fillStyle = '#000';
-            ctx.font = '900 18px "Space Grotesk", sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('THWIP!!', 34, 43);
-            ctx.restore();
-        }
-
-        function updateStagePosition() {
-            state.stagePos.x = parseFloat(document.getElementById('pos-x-range').value);
-            state.stagePos.y = parseFloat(document.getElementById('pos-y-range').value);
-            state.stagePos.scale = parseFloat(document.getElementById('scale-range').value);
-        }
-
-        function resetStagePosition() {
-            state.stagePos = { x: 0, y: 0, scale: 1 };
-            document.getElementById('pos-x-range').value = 0;
-            document.getElementById('pos-y-range').value = 0;
-            document.getElementById('scale-range').value = 1;
-            showToast('Frame position centered!');
-        }
-
-        function changeScene(sceneKey) {
-            state.selectedScene = sceneKey;
-        }
-
-        function toggleBackgroundRemoval() {
-            state.segmentationActive = !state.segmentationActive;
-            const btn = document.getElementById('bg-toggle-btn');
-            btn.innerText = state.segmentationActive ? 'ON (CUTOUT)' : 'OFF (FULL CAM)';
-            btn.className = `font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso ${state.segmentationActive ? 'bg-sage text-espresso' : 'bg-sand text-espresso/75'}`;
-            showToast(`Background removal ${state.segmentationActive ? 'enabled' : 'disabled'}`);
-        }
-
-        function setFilter(filterClass) {
-            state.selectedFilter = filterClass;
-            const canvas = document.getElementById('live-stage-canvas');
-            canvas.className = `w-full max-w-[640px] h-auto rounded-2xl border-2 border-cream shadow-xl cursor-move bg-sand ${filterClass}`;
-        }
-
-        function changeCaptureMode(val) {
-            state.captureMode = parseInt(val);
-            document.getElementById('capture-btn-label').innerText = state.captureMode === 1 ? 'TAKE PHOTO' : `TAKE ${state.captureMode}-SHOT STRIP`;
-        }
-
-        function toggleReadyState() {
-            state.isReady = !state.isReady;
-            document.getElementById('ready-btn-text').innerText = state.isReady ? 'READY ✓' : "I'M READY";
-            showToast(state.isReady ? 'Signaled READY to the booth!' : 'Ready status paused');
-        }
-
-        function toggleCamera() {
-            state.cameraActive = !state.cameraActive;
-            const btn = document.getElementById('toggle-cam-btn');
-            btn.querySelector('span').innerText = state.cameraActive ? 'Cam On' : 'Cam Off';
-        }
-
-        function toggleVirtualFriend() {
-            state.showVirtualFriend = !state.showVirtualFriend;
-            document.getElementById('friend-sim-label').innerText = state.showVirtualFriend ? '- Remove Friend' : '+ Add Friend';
-        }
-
-        // ============================================================
-        // SYNCHRONIZED CAPTURE & HIGH-RES COMPOSITE GENERATOR
-        // ============================================================
-        let developingTimeout = null;
-
-        async function startPhotoCaptureSequence() {
-            state.capturedPoses = [];
-            const tray = document.getElementById('multi-shot-tray');
-            const thumbContainer = document.getElementById('thumbnails-container');
-            thumbContainer.innerHTML = '';
-
-            if (state.captureMode > 1) tray.classList.remove('hidden');
-            else tray.classList.add('hidden');
-
-            for (let shot = 1; shot <= state.captureMode; shot++) {
-                await runSingleCountdown(shot, state.captureMode);
-                const snapDataUrl = captureStageSnapshot();
-                state.capturedPoses.push(snapDataUrl);
-
-                const img = document.createElement('img');
-                img.src = snapDataUrl;
-                img.className = 'w-20 h-14 object-cover rounded-lg border-2 border-espresso shadow';
-                thumbContainer.appendChild(img);
-            }
-
-            beginDarkroomDeveloping();
-        }
-
-        function runSingleCountdown(currentShot, totalShots) {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('countdown-modal');
-                const numEl = document.getElementById('countdown-number');
-                const subEl = document.getElementById('countdown-subtext');
-                modal.classList.remove('hidden');
-
-                let count = 3;
-                subEl.innerText = totalShots > 1 ? `POSE ${currentShot} OF ${totalShots} IN` : 'SYNCHRONIZED CAPTURE IN';
-                numEl.innerText = count;
-                playBeepSound(440);
-
-                const timer = setInterval(() => {
-                    count--;
-                    if (count > 0) {
-                        numEl.innerText = count;
-                        playBeepSound(440);
-                    } else if (count === 0) {
-                        numEl.innerText = 'CHEESE!';
-                        playSnapSound();
-                        triggerScreenFlash();
-                    } else {
-                        clearInterval(timer);
-                        modal.classList.add('hidden');
-                        resolve();
-                    }
-                }, 700);
-            });
-        }
-
-        function triggerScreenFlash() {
-            const flash = document.getElementById('flash-element');
-            flash.classList.remove('flash-overlay');
-            void flash.offsetWidth;
-            flash.classList.add('flash-overlay');
-        }
-
-        function captureStageSnapshot() {
-            const stageCanvas = document.getElementById('live-stage-canvas');
-            const snapCanvas = document.createElement('canvas');
-            snapCanvas.width = stageCanvas.width;
-            snapCanvas.height = stageCanvas.height;
-            const sCtx = snapCanvas.getContext('2d');
-
-            const filterMap = {
-                'filter-warm': 'sepia(0.2) contrast(1.05) saturate(1.1)',
-                'filter-disposable': 'contrast(1.2) saturate(1.25) sepia(0.15)',
-                'filter-bw': 'grayscale(1) contrast(1.2)',
-                'filter-none': 'none'
-            };
-            sCtx.filter = filterMap[state.selectedFilter] || 'none';
-            sCtx.drawImage(stageCanvas, 0, 0);
-            return snapCanvas.toDataURL('image/png');
-        }
-
-        async function beginDarkroomDeveloping() {
-            await buildFinalCompositeCanvas();
-            showView('developing');
-
-            const previewImg = document.getElementById('developing-img-preview');
-            const statusText = document.getElementById('developing-status-text');
-            previewImg.src = state.capturedPoses[0];
-
-            const captions = [
-                '"Developing questionable decisions..."',
-                '"Checking if anyone blinked..."',
-                '"Collecting pixels across timezones..."',
-                '"Making friendship look JPEG-shaped..."'
-            ];
-            let idx = 0;
-            const capTimer = setInterval(() => {
-                idx = (idx + 1) % captions.length;
-                statusText.innerText = captions[idx];
-            }, 750);
-
-            setTimeout(() => {
-                previewImg.classList.remove('blur-md', 'opacity-40');
-            }, 350);
-
-            developingTimeout = setTimeout(() => {
-                clearInterval(capTimer);
-                showView('result');
-            }, 2600);
-        }
-
-        function finishDevelopingImmediately() {
-            if (developingTimeout) clearTimeout(developingTimeout);
-            showView('result');
-        }
-
-        function loadImageAsync(src) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => resolve(null);
-                img.src = src;
-            });
-        }
-
-        async function buildFinalCompositeCanvas() {
-            const canvas = document.getElementById('final-composite-canvas');
-            const ctx = canvas.getContext('2d');
-            const count = state.capturedPoses.length || 1;
-
-            const pad = 36;
-            const frameW = 480;
-            const frameH = 330;
-            const gap = 22;
-            const headerH = 75;
-            const footerH = 85;
-
-            canvas.width = frameW + pad * 2;
-            canvas.height = headerH + (frameH * count) + (gap * (count - 1)) + footerH;
-
-            // Strip Background Theme
-            if (state.selectedScene === 'spidey') {
-                ctx.fillStyle = '#DC2626';
-            } else if (state.selectedScene === 'anime') {
-                ctx.fillStyle = '#FDE68A';
-            } else {
-                ctx.fillStyle = '#FBF7F0';
-            }
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Outer Border
-            ctx.strokeStyle = '#51463D';
-            ctx.lineWidth = 8;
-            ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-
-            // Header Title
-            ctx.fillStyle = state.selectedScene === 'spidey' ? '#FFFFFF' : '#51463D';
-            ctx.font = 'bold 26px "Space Grotesk", sans-serif';
-            ctx.textAlign = 'left';
-            ctx.fillText('FriendsBooth.io', pad, 48);
-
-            ctx.font = 'bold 13px "DM Mono", monospace';
-            ctx.fillText(`ROOM #${state.roomCode} • ${new Date().toLocaleDateString()}`, canvas.width - pad - 210, 46);
-
-            // Load & Draw Each Captured Pose Frame Synchronously
-            for (let i = 0; i < state.capturedPoses.length; i++) {
-                const img = await loadImageAsync(state.capturedPoses[i]);
-                if (img) {
-                    const y = headerH + i * (frameH + gap);
-                    ctx.drawImage(img, pad, y, frameW, frameH);
-                    ctx.strokeStyle = '#51463D';
-                    ctx.lineWidth = 4;
-                    ctx.strokeRect(pad, y, frameW, frameH);
-                }
-            }
-
-            // Footer Tagline
-            const footerY = canvas.height - 32;
-            ctx.fillStyle = state.selectedScene === 'spidey' ? '#FACC15' : '#D88772';
-            ctx.font = 'bold 22px "Caveat", cursive';
-            ctx.fillText('"east or west Abrish is the best — distance is a scam."', pad, footerY);
-        }
-
-        function downloadCompositePhoto() {
-            const canvas = document.getElementById('final-composite-canvas');
-            const link = document.createElement('a');
-            link.download = `FriendsBooth-${state.roomCode}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-            showToast('High-Res Photo Strip Downloaded!');
-        }
-
-        function retakePhoto() {
-            showView('room');
-        }
-
-        function copyRoomLink() {
-            const url = `${window.location.origin}${window.location.pathname}?room=${state.roomCode}`;
-            if (navigator.clipboard) navigator.clipboard.writeText(url);
-            showToast('Invite link copied to clipboard!');
+            showToast('Invite link copied: ' + state.roomCode);
         }
 
         function leaveRoom() {
-            if (state.localStream) state.localStream.getTracks().forEach(t => t.stop());
-            state.localStream = null;
-            state.cameraActive = false;
-            showView('landing');
+            stopCamera();
+            navigateTo('landing');
         }
 
-        // ============================================================
-        // INTERACTIVE SCRAPBOOK DIARY ENGINE
-        // ============================================================
-        function renderDiaryBook() {
-            const wrapper = document.getElementById('diary-book-wrapper');
-            if (!wrapper) return;
-
-            const pageIndex = state.diary.currentPage;
-            const totalPages = state.diary.pages.length + 2;
-            document.getElementById('diary-page-indicator').innerText = `PAGE ${pageIndex + 1} OF ${totalPages}`;
-
-            wrapper.innerHTML = '';
-
-            const pageCard = document.createElement('div');
-            pageCard.className = 'paper-card p-6 sm:p-8 rounded-3xl bg-cream max-w-xl w-full min-h-[460px] space-y-6 shadow-2xl relative border-4 border-espresso';
-
-            if (pageIndex < state.diary.pages.length) {
-                const pageData = state.diary.pages[pageIndex];
-                pageCard.innerHTML = `
-                    <div class="flex items-center justify-between border-b-2 border-espresso/20 pb-3">
-                        <input type="text" value="${pageData.title}" onchange="updatePageTitle(${pageIndex}, this.value)" class="font-display font-bold text-2xl bg-transparent text-espresso focus:outline-none w-full">
-                        <span class="font-mono text-xs bg-butter px-2 py-1 rounded font-bold border border-espresso">#PAGE_${pageIndex + 1}</span>
-                    </div>
-
-                    <div class="space-y-4">
-                        <textarea onchange="updatePageText(${pageIndex}, this.value)" class="w-full h-32 p-3 bg-vanilla/60 border-2 border-espresso rounded-2xl ${pageData.font} text-2xl text-espresso focus:outline-none">${pageData.text}</textarea>
-                        
-                        <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
-                            <label class="flex items-center gap-1 font-bold">
-                                <span>Font:</span>
-                                <select onchange="updatePageFont(${pageIndex}, this.value)" class="bg-sand border border-espresso rounded p-1 font-bold">
-                                    <option value="font-hand" ${pageData.font === 'font-hand' ? 'selected' : ''}>Caveat Handwriting</option>
-                                    <option value="font-display" ${pageData.font === 'font-display' ? 'selected' : ''}>Space Grotesk</option>
-                                    <option value="font-mono" ${pageData.font === 'font-mono' ? 'selected' : ''}>DM Mono</option>
-                                </select>
-                            </label>
-                            <button onclick="attachPhotoToCurrentPage(${pageIndex})" class="paper-button-secondary text-xs px-3 py-1.5 rounded-lg font-bold">
-                                📸 Stick Last Photobooth Strip
-                            </button>
-                        </div>
-
-                        ${pageData.attachedPhoto ? `
-                            <div class="relative p-2 bg-sand rounded-xl border-2 border-espresso shadow-lg transform rotate-1 mt-4">
-                                <img src="${pageData.attachedPhoto}" class="w-full max-h-64 object-contain rounded-lg">
-                                <button onclick="removeAttachedPhoto(${pageIndex})" class="absolute top-2 right-2 bg-terracotta text-white border border-espresso rounded-full w-7 h-7 flex items-center justify-center font-bold text-xs">✕</button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
-            } else if (pageIndex === state.diary.pages.length) {
-                pageCard.innerHTML = `
-                    <div class="border-b-2 border-espresso/20 pb-2">
-                        <span class="font-mono text-xs font-bold text-terracotta">EDITABLE CHECKLIST</span>
-                        <h3 class="font-display text-2xl font-bold uppercase text-espresso">list of ppl I want a pic with:</h3>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-2 font-mono text-xs max-h-80 overflow-y-auto pr-1">
-                        ${state.diary.checklist.map((item, i) => `
-                            <label class="flex items-center gap-2 bg-vanilla p-2 rounded-lg border border-espresso/40 cursor-pointer">
-                                <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem(${i})" class="w-4 h-4 accent-terracotta">
-                                <span class="${item.done ? 'line-through opacity-50' : 'font-bold'}">${item.name}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                `;
+        // 6. CAMERA & LIVE CANVAS RENDERING (With Guaranteed Fallback & Drag-to-Position)
+        async function startCameraAndLoop() {
+            const video = document.getElementById('webcamVideo');
+            if (state.cameraEnabled && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    if (!mediaStream) {
+                        mediaStream = await navigator.mediaDevices.getUserMedia({
+                            video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                            audio: false
+                        });
+                    }
+                    if (video) {
+                        video.srcObject = mediaStream;
+                        await video.play().catch(() => {});
+                    }
+                    state.cameraReady = true;
+                } catch (err) {
+                    state.cameraReady = false;
+                    showToast('Camera unavailable or blocked — using interactive studio camera preview.');
+                }
             } else {
-                pageCard.innerHTML = `
-                    <div class="space-y-4 text-espresso font-mono">
-                        <div class="flex items-center justify-between border-b-2 border-espresso/20 pb-2">
-                            <span class="font-bold text-terracotta text-sm">CREATOR NOTE</span>
-                            <span class="bg-butter px-2 py-0.5 rounded border border-espresso font-bold text-xs">THE END</span>
-                        </div>
+                state.cameraReady = false;
+            }
 
-                        <div class="font-hand text-2xl leading-relaxed space-y-2 bg-vanilla p-6 rounded-2xl border-2 border-espresso">
-                            <p>Yo! I'm Ray (Rayaan)!..</p>
-                            <p class="text-terracotta">ummm</p>
-                            <p>made this because my friends live inconveniently far away.</p>
-                            <p>blame me for everything else.</p>
-                            <p class="text-sm font-sans text-espresso/80">if you have complaints, please keep them to yourself. (jk!! Reach me!!, i don't bite. usually.)</p>
-                            <p>if you have memes, send them.</p>
-                            <a href="https://instagram.com" target="_blank" class="inline-block mt-2 font-mono text-lg font-bold text-terracotta hover:underline">
-                                ↗ @the_rayaan_k
-                            </a>
+            setupStagePointerEvents();
+            if (!renderLoopId) {
+                renderLoopId = requestAnimationFrame(renderStudioLoop);
+            }
+        }
+
+        function stopCameraLoop() {
+            if (renderLoopId) {
+                cancelAnimationFrame(renderLoopId);
+                renderLoopId = null;
+            }
+        }
+
+        function stopCamera() {
+            stopCameraLoop();
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(t => t.stop());
+                mediaStream = null;
+            }
+            state.cameraReady = false;
+        }
+
+        function toggleCamera() {
+            state.cameraEnabled = !state.cameraEnabled;
+            const label = document.getElementById('labelToggleCam');
+            if (label) label.textContent = state.cameraEnabled ? 'Cam: ON' : 'Cam: OFF';
+            if (state.cameraEnabled) {
+                startCameraAndLoop();
+            } else {
+                stopCamera();
+            }
+        }
+
+        function toggleBackgroundRemoval() {
+            state.bgRemovalEnabled = !state.bgRemovalEnabled;
+            const btn = document.getElementById('btnBgRemove');
+            if (btn) {
+                btn.textContent = state.bgRemovalEnabled ? 'BG Cutout: ON' : 'BG Cutout: OFF';
+                btn.classList.toggle('bg-sage/60', state.bgRemovalEnabled);
+                btn.classList.toggle('bg-sand', !state.bgRemovalEnabled);
+            }
+            showToast(state.bgRemovalEnabled ? 'Background cutout enabled' : 'Showing full camera frame');
+        }
+
+        function updateCurrentFilter() {
+            const sel = document.getElementById('filterSelect');
+            state.selectedFilter = (sel && sel.value) || 'none';
+        }
+
+        function updateUserTransform() {
+            const xEl = document.getElementById('posXSlider');
+            const yEl = document.getElementById('posYSlider');
+            const sEl = document.getElementById('scaleSlider');
+
+            state.userPosX = xEl ? parseFloat(xEl.value) : 0;
+            state.userPosY = yEl ? parseFloat(yEl.value) : 0;
+            state.userScale = sEl ? parseFloat(sEl.value) / 100 : 1.0;
+
+            setText('posXVal', Math.round(state.userPosX) + '%');
+            setText('posYVal', Math.round(state.userPosY) + '%');
+            setText('scaleVal', Math.round(state.userScale * 100) + '%');
+        }
+
+        function resetUserTransform() {
+            state.userPosX = 0;
+            state.userPosY = 0;
+            state.userScale = 1.0;
+
+            const xEl = document.getElementById('posXSlider');
+            const yEl = document.getElementById('posYSlider');
+            const sEl = document.getElementById('scaleSlider');
+            if (xEl) xEl.value = '0';
+            if (yEl) yEl.value = '0';
+            if (sEl) sEl.value = '100';
+
+            setText('posXVal', '0%');
+            setText('posYVal', '0%');
+            setText('scaleVal', '100%');
+        }
+
+        // Dragging user directly on the stage canvas
+        function setupStagePointerEvents() {
+            const canvas = document.getElementById('studioCanvas');
+            if (!canvas || canvas._eventsBound) return;
+            canvas._eventsBound = true;
+
+            const onDown = (clientX, clientY) => {
+                state.isDraggingOnStage = true;
+                state.dragStartX = clientX;
+                state.dragStartY = clientY;
+                state.dragOrigX = state.userPosX;
+                state.dragOrigY = state.userPosY;
+            };
+
+            const onMove = (clientX, clientY) => {
+                if (!state.isDraggingOnStage) return;
+                const rect = canvas.getBoundingClientRect();
+                if (!rect.width || !rect.height) return;
+                const dxPct = ((clientX - state.dragStartX) / rect.width) * 100;
+                const dyPct = ((clientY - state.dragStartY) / rect.height) * 100;
+
+                state.userPosX = Math.max(-40, Math.min(40, state.dragOrigX + dxPct));
+                state.userPosY = Math.max(-35, Math.min(35, state.dragOrigY + dyPct));
+
+                const xEl = document.getElementById('posXSlider');
+                const yEl = document.getElementById('posYSlider');
+                if (xEl) xEl.value = String(Math.round(state.userPosX));
+                if (yEl) yEl.value = String(Math.round(state.userPosY));
+                setText('posXVal', Math.round(state.userPosX) + '%');
+                setText('posYVal', Math.round(state.userPosY) + '%');
+            };
+
+            const onUp = () => {
+                state.isDraggingOnStage = false;
+            };
+
+            canvas.addEventListener('mousedown', e => onDown(e.clientX, e.clientY));
+            window.addEventListener('mousemove', e => onMove(e.clientX, e.clientY));
+            window.addEventListener('mouseup', onUp);
+
+            canvas.addEventListener('touchstart', e => {
+                if (e.touches.length > 0) onDown(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('touchmove', e => {
+                if (e.touches.length > 0) onMove(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: true });
+            window.addEventListener('touchend', onUp);
+        }
+
+        function renderSceneGrid() {
+            const grid = document.getElementById('sceneGrid');
+            if (!grid) return;
+
+            grid.innerHTML = SCENES.map(sc => {
+                const active = state.selectedScene === sc.id;
+                return `
+                    <button type="button" onclick="selectScene('${sc.id}')"
+                        class="text-left p-2.5 rounded-xl border-2 transition-all ${active ? 'border-espresso bg-butter shadow-hardSm' : 'border-espresso/40 bg-cream hover:bg-sand'}">
+                        <div class="flex items-center justify-between gap-1">
+                            <span class="font-display font-bold text-xs text-espresso">${sc.name}</span>
                         </div>
-                    </div>
+                        <span class="inline-block mt-1 font-mono text-[10px] px-1.5 py-0.5 rounded bg-paper border border-espresso/30">${sc.tag}</span>
+                    </button>
                 `;
-            }
-
-            wrapper.appendChild(pageCard);
+            }).join('');
         }
 
-        function addDiaryPage() {
-            state.diary.pages.push({
-                id: Date.now(),
-                title: `New Entry #${state.diary.pages.length + 1}`,
-                text: 'Write your memories here...',
-                font: 'font-hand',
-                attachedPhoto: null
+        function selectScene(sceneId) {
+            state.selectedScene = sceneId;
+            state.customBgImage = null;
+            renderSceneGrid();
+        }
+
+        function handleCustomBgUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = new Image();
+                img.onload = () => {
+                    state.customBgImage = img;
+                    state.selectedScene = 'custom';
+                    renderSceneGrid();
+                    showToast('Custom background applied!');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Draw Background Scene onto any 2D canvas context
+        function drawBackgroundScene(ctx, w, h, timeSec) {
+            if (state.customBgImage) {
+                ctx.drawImage(state.customBgImage, 0, 0, w, h);
+                return;
+            }
+
+            const scene = SCENES.find(s => s.id === state.selectedScene) || SCENES[0];
+            const grad = ctx.createLinearGradient(0, 0, w, h);
+            grad.addColorStop(0, scene.bg1);
+            grad.addColorStop(1, scene.bg2);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, w, h);
+
+            if (scene.id === 'anime') {
+                // Anime sky streaks & sparkle accents
+                ctx.strokeStyle = 'rgba(244, 114, 182, 0.35)';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 12; i++) {
+                    const y = ((i * 67 + timeSec * 18) % h);
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(w, y - 24);
+                    ctx.stroke();
+                }
+                ctx.fillStyle = '#FDE047';
+                ctx.font = 'bold 22px "Space Grotesk", sans-serif';
+                ctx.fillText('★ キラキラ ★', w * 0.06, h * 0.16);
+            } else if (scene.id === 'spiderman') {
+                // Spider-Man comic halftone & web lines
+                ctx.fillStyle = 'rgba(250, 204, 21, 0.16)';
+                for (let x = 20; x < w; x += 36) {
+                    for (let y = 20; y < h; y += 36) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(w * 0.85, 0);
+                ctx.lineTo(w * 0.55, h * 0.45);
+                ctx.moveTo(w, h * 0.12);
+                ctx.lineTo(w * 0.55, h * 0.45);
+                ctx.moveTo(w * 0.72, 0);
+                ctx.lineTo(w * 0.55, h * 0.45);
+                ctx.stroke();
+
+                ctx.fillStyle = '#FACC15';
+                ctx.strokeStyle = '#51463D';
+                ctx.lineWidth = 3;
+                ctx.font = 'bold 26px "Space Grotesk", sans-serif';
+                ctx.strokeText('THWIP!!', w * 0.68, h * 0.2);
+                ctx.fillText('THWIP!!', w * 0.68, h * 0.2);
+            } else if (scene.id === 'space') {
+                ctx.fillStyle = '#FFFDF8';
+                for (let i = 0; i < 35; i++) {
+                    const sx = ((i * 97) % w);
+                    const sy = ((i * 53) % h);
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, (i % 3) + 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Draw User Subject (either real webcam video or fallback portrait) with user X/Y/Scale
+        function drawUserSubject(ctx, w, h, timeSec) {
+            const video = document.getElementById('webcamVideo');
+            const centerX = w * 0.5 + (state.userPosX / 100) * w;
+            const centerY = h * 0.54 + (state.userPosY / 100) * h;
+            const boxW = w * 0.52 * state.userScale;
+            const boxH = h * 0.74 * state.userScale;
+            const left = centerX - boxW / 2;
+            const top = centerY - boxH / 2;
+
+            ctx.save();
+
+            // Apply selected CSS filter approximation on context
+            ctx.filter = getCanvasFilterString(state.selectedFilter);
+
+            if (state.bgRemovalEnabled) {
+                // Rounded / organic studio cutout frame around the subject
+                ctx.beginPath();
+                ctx.roundRect(left, top, boxW, boxH, 28);
+                ctx.clip();
+            }
+
+            if (state.cameraEnabled && state.cameraReady && video && video.readyState >= 2) {
+                // Mirror horizontally like a real photo booth
+                ctx.translate(left + boxW, top);
+                ctx.scale(-1, 1);
+                ctx.drawImage(video, 0, 0, boxW, boxH);
+            } else {
+                // Procedural fallback subject so user always sees a clear subject on screen
+                const bob = Math.sin(timeSec * 3) * 4;
+                ctx.fillStyle = '#FBF7F0';
+                ctx.fillRect(left, top, boxW, boxH);
+
+                // Shoulders / Hoodie
+                ctx.fillStyle = '#D88772';
+                ctx.beginPath();
+                ctx.ellipse(left + boxW / 2, top + boxH * 0.88 + bob, boxW * 0.36, boxH * 0.24, 0, Math.PI, 0);
+                ctx.fill();
+
+                // Head
+                ctx.fillStyle = '#D9B99B';
+                ctx.beginPath();
+                ctx.arc(left + boxW / 2, top + boxH * 0.44 + bob, Math.min(boxW, boxH) * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eyes & Smile
+                ctx.fillStyle = '#51463D';
+                const eyeOffsetX = Math.min(boxW, boxH) * 0.065;
+                const eyeY = top + boxH * 0.42 + bob;
+                ctx.beginPath();
+                ctx.arc(left + boxW / 2 - eyeOffsetX, eyeY, 4, 0, Math.PI * 2);
+                ctx.arc(left + boxW / 2 + eyeOffsetX, eyeY, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#51463D';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(left + boxW / 2, eyeY + 10, 10, 0.15 * Math.PI, 0.85 * Math.PI);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+
+            // Crisp cutout border when background removal is active
+            if (state.bgRemovalEnabled) {
+                ctx.save();
+                ctx.strokeStyle = '#FFFDF8';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.roundRect(left, top, boxW, boxH, 28);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        function getCanvasFilterString(filterName) {
+            switch (filterName) {
+                case 'warm': return 'sepia(0.22) contrast(1.05) saturate(1.15)';
+                case 'disposable': return 'contrast(1.14) saturate(1.25) sepia(0.18)';
+                case 'y2k': return 'contrast(1.2) saturate(1.35) hue-rotate(-6deg)';
+                case 'bw': return 'grayscale(1) contrast(1.18)';
+                case 'softflash': return 'brightness(1.12) contrast(0.94)';
+                case 'washed': return 'contrast(0.85) brightness(1.08) saturate(0.82)';
+                case 'vintagepaper': return 'sepia(0.35) contrast(0.95)';
+                default: return 'none';
+            }
+        }
+
+        function renderStudioLoop(nowMs) {
+            const canvas = document.getElementById('studioCanvas');
+            if (canvas) {
+                const rect = canvas.getBoundingClientRect();
+                const w = Math.max(300, Math.round(rect.width || 800));
+                const h = Math.max(225, Math.round(rect.height || 600));
+                if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width = w;
+                    canvas.height = h;
+                }
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    const timeSec = (nowMs || 0) / 1000;
+                    drawBackgroundScene(ctx, w, h, timeSec);
+                    drawUserSubject(ctx, w, h, timeSec);
+                }
+            }
+            renderLoopId = requestAnimationFrame(renderStudioLoop);
+        }
+
+        // 7. SYNCHRONIZED MULTI-PHOTO CAPTURE & COMPOSITION
+        async function startSynchronizedCapture() {
+            if (state.isCapturing) return;
+            state.isCapturing = true;
+
+            const shotSelect = document.getElementById('shotCountSelect');
+            const timerSelect = document.getElementById('countdownSelect');
+            const layoutSelect = document.getElementById('layoutSelect');
+
+            state.shotCount = shotSelect ? parseInt(shotSelect.value, 10) : 4;
+            state.countdownSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 3;
+            state.selectedLayout = layoutSelect ? layoutSelect.value : 'strip';
+            state.capturedFrames = [];
+
+            const btnCapture = document.getElementById('btnCapturePhoto');
+            if (btnCapture) btnCapture.disabled = true;
+
+            const multiBadge = document.getElementById('multiShotBadge');
+            if (multiBadge) multiBadge.classList.remove('hidden');
+
+            try {
+                for (let shotIdx = 1; shotIdx <= state.shotCount; shotIdx++) {
+                    if (multiBadge) {
+                        multiBadge.textContent = `Shot ${shotIdx} of ${state.shotCount}`;
+                    }
+
+                    if (state.countdownSeconds > 0) {
+                        await runCountdown(state.countdownSeconds, shotIdx, state.shotCount);
+                    }
+
+                    triggerCameraFlash();
+                    const frameDataUrl = captureCurrentStageFrame();
+                    state.capturedFrames.push(frameDataUrl);
+
+                    if (shotIdx < state.shotCount) {
+                        await sleep(650);
+                    }
+                }
+
+                if (multiBadge) multiBadge.classList.add('hidden');
+                await composeFinalStripAndShowResult();
+            } finally {
+                state.isCapturing = false;
+                if (btnCapture) btnCapture.disabled = false;
+                hideCountdown();
+            }
+        }
+
+        function runCountdown(seconds, shotIdx, totalShots) {
+            return new Promise(resolve => {
+                const overlay = document.getElementById('countdownOverlay');
+                const numEl = document.getElementById('countdownNumber');
+                const subEl = document.getElementById('countdownSubtext');
+
+                if (overlay) overlay.classList.remove('hidden');
+                if (subEl) subEl.textContent = `Shot ${shotIdx}/${totalShots} • Get ready!`;
+
+                let current = seconds;
+                if (numEl) numEl.textContent = String(current);
+
+                const interval = setInterval(() => {
+                    current--;
+                    if (current > 0) {
+                        if (numEl) numEl.textContent = String(current);
+                    } else if (current === 0) {
+                        if (numEl) numEl.textContent = 'CHEESE!!';
+                    } else {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 750);
             });
-            state.diary.currentPage = state.diary.pages.length - 1;
-            renderDiaryBook();
-            showToast('New diary page created!');
         }
 
-        function nextDiaryPage() {
-            const total = state.diary.pages.length + 2;
-            if (state.diary.currentPage < total - 1) {
-                state.diary.currentPage++;
-                renderDiaryBook();
+        function hideCountdown() {
+            const overlay = document.getElementById('countdownOverlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        function triggerCameraFlash() {
+            const flash = document.getElementById('flashOverlay');
+            if (!flash) return;
+            flash.classList.add('active');
+            setTimeout(() => {
+                flash.classList.remove('active');
+            }, 140);
+        }
+
+        function captureCurrentStageFrame() {
+            const studioCanvas = document.getElementById('studioCanvas');
+            if (studioCanvas && studioCanvas.width > 0 && studioCanvas.height > 0) {
+                return studioCanvas.toDataURL('image/png');
             }
+            // Guaranteed fallback canvas if studio canvas wasn't sized yet
+            const fallback = document.createElement('canvas');
+            fallback.width = 800;
+            fallback.height = 600;
+            const ctx = fallback.getContext('2d');
+            drawBackgroundScene(ctx, 800, 600, 1);
+            drawUserSubject(ctx, 800, 600, 1);
+            return fallback.toDataURL('image/png');
+        }
+
+        function sleep(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        // Compose Multi-Photo Strip / Grid / Scrapbook onto High-Res Canvas
+        async function composeFinalStripAndShowResult() {
+            const frames = state.capturedFrames.length > 0 ? state.capturedFrames : [captureCurrentStageFrame()];
+            const loadedImgs = await Promise.all(
+                frames.map(src => new Promise(resolve => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = () => resolve(img);
+                    img.src = src;
+                }))
+            );
+
+            const compCanvas = document.getElementById('compositionCanvas');
+            const ctx = compCanvas.getContext('2d');
+
+            const isGrid = state.selectedLayout === 'grid' && loadedImgs.length >= 4;
+            const frameW = 720;
+            const frameH = 540;
+            const pad = 36;
+            const headerH = 110;
+            const footerH = 100;
+
+            let totalW, totalH;
+            if (isGrid) {
+                totalW = frameW * 2 + pad * 3;
+                totalH = headerH + frameH * 2 + pad * 3 + footerH;
+            } else {
+                totalW = frameW + pad * 2;
+                totalH = headerH + loadedImgs.length * (frameH + pad) + footerH;
+            }
+
+            compCanvas.width = totalW;
+            compCanvas.height = totalH;
+
+            // Paper / Strip background
+            ctx.fillStyle = '#FBF7F0';
+            ctx.fillRect(0, 0, totalW, totalH);
+
+            // Outer border
+            ctx.strokeStyle = '#51463D';
+            ctx.lineWidth = 6;
+            ctx.strokeRect(12, 12, totalW - 24, totalH - 24);
+
+            // Header
+            ctx.fillStyle = '#51463D';
+            ctx.font = 'bold 34px "Space Grotesk", sans-serif';
+            ctx.fillText(state.roomName.toUpperCase(), pad, 62);
+
+            ctx.font = '18px "DM Mono", monospace';
+            ctx.fillStyle = '#D88772';
+            ctx.fillText(`CODE: ${state.roomCode} • ${loadedImgs.length} SHOT(S)`, pad, 92);
+
+            // Draw Frames
+            loadedImgs.forEach((img, idx) => {
+                let x, y;
+                if (isGrid) {
+                    const col = idx % 2;
+                    const row = Math.floor(idx / 2);
+                    x = pad + col * (frameW + pad);
+                    y = headerH + pad + row * (frameH + pad);
+                } else {
+                    x = pad;
+                    y = headerH + idx * (frameH + pad);
+                }
+
+                ctx.save();
+                if (state.selectedLayout === 'scrapbook') {
+                    const angle = (idx % 2 === 0 ? -1 : 1) * 0.025;
+                    ctx.translate(x + frameW / 2, y + frameH / 2);
+                    ctx.rotate(angle);
+                    ctx.drawImage(img, -frameW / 2, -frameH / 2, frameW, frameH);
+                    ctx.strokeStyle = '#51463D';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(-frameW / 2, -frameH / 2, frameW, frameH);
+                } else {
+                    ctx.drawImage(img, x, y, frameW, frameH);
+                    ctx.strokeStyle = '#51463D';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(x, y, frameW, frameH);
+                }
+                ctx.restore();
+
+                // Frame number badge
+                ctx.fillStyle = '#E9CB73';
+                ctx.fillRect(x + 14, y + 14, 74, 30);
+                ctx.strokeStyle = '#51463D';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x + 14, y + 14, 74, 30);
+                ctx.fillStyle = '#51463D';
+                ctx.font = 'bold 14px "DM Mono", monospace';
+                ctx.fillText(`#${idx + 1}`, x + 26, y + 34);
+            });
+
+            // Footer with Friends & Ray
+            const footerY = totalH - 42;
+            ctx.fillStyle = '#51463D';
+            ctx.font = 'bold 20px "Space Grotesk", sans-serif';
+            ctx.fillText(`FRIENDSBOOTH.IO — ${state.activeFriend1} • ${state.activeFriend2} • Ray`, pad, footerY);
+
+            ctx.font = '15px "DM Mono", monospace';
+            ctx.fillStyle = '#51463D';
+            ctx.fillText('Different places, same people', pad, footerY + 24);
+
+            const dataUrl = compCanvas.toDataURL('image/png');
+            state.finalImageDataUrl = dataUrl;
+
+            const resultImg = document.getElementById('finalComposedImage');
+            if (resultImg) {
+                resultImg.src = dataUrl;
+                resultImg.classList.remove('developing-photo');
+                void resultImg.offsetWidth;
+                resultImg.classList.add('developing-photo');
+            }
+
+            setText('resultTitle', 'Developing your strip...');
+            setText('resultSubtitle', `${loadedImgs.length} photo(s) captured in ${state.roomCode}`);
+
+            const devBox = document.getElementById('developingStatusBox');
+            if (devBox) {
+                devBox.classList.remove('hidden');
+                let qIdx = 0;
+                devBox.textContent = DEVELOPING_QUOTES[0];
+                clearInterval(window._devQuoteTimer);
+                window._devQuoteTimer = setInterval(() => {
+                    qIdx++;
+                    if (qIdx < DEVELOPING_QUOTES.length) {
+                        devBox.textContent = DEVELOPING_QUOTES[qIdx];
+                    } else {
+                        finishDevelopmentAnimation();
+                    }
+                }, 850);
+            }
+
+            stopCameraLoop();
+            navigateTo('result');
+        }
+
+        function finishDevelopmentAnimation() {
+            clearInterval(window._devQuoteTimer);
+            setText('resultTitle', 'Your Strip Is Ready!');
+            const devBox = document.getElementById('developingStatusBox');
+            if (devBox) devBox.classList.add('hidden');
+        }
+
+        function skipDevelopmentAnimation() {
+            const img = document.getElementById('finalComposedImage');
+            if (img) img.classList.remove('developing-photo');
+            finishDevelopmentAnimation();
+        }
+
+        function backToStudio() {
+            navigateTo('studio');
+        }
+
+        function downloadFinalStrip() {
+            if (!state.finalImageDataUrl) {
+                showToast('No photo available to download yet.');
+                return;
+            }
+            const link = document.createElement('a');
+            link.href = state.finalImageDataUrl;
+            link.download = `FriendsBooth-${state.roomCode}-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Downloaded PNG strip!');
+        }
+
+        function stickResultIntoDiary() {
+            if (!state.finalImageDataUrl) {
+                showToast('Take a photo first to stick it in the diary!');
+                return;
+            }
+            // Add photo onto the first custom diary page (or create one if needed)
+            const firstCustomIdx = state.diaryPages.findIndex(p => p.type === 'custom');
+            const targetIdx = firstCustomIdx >= 0 ? firstCustomIdx : 0;
+            const page = state.diaryPages[targetIdx];
+            if (page && page.type === 'custom') {
+                page.photoUrl = state.finalImageDataUrl;
+                page.photoScale = 0.85;
+                page.photoRotate = -3;
+                saveDiaryData();
+                state.diaryCurrentPage = targetIdx;
+                navigateTo('landing');
+                renderDiaryBook();
+                scrollToSection('diarySection');
+                showToast('Stuck your photo right into the diary!');
+            }
+        }
+
+        // 8. INTERACTIVE PAGE-TURNING DIARY, WISHLIST & RAY BIO
+        function loadDiaryData() {
+            try {
+                const savedPages = localStorage.getItem('friendsbooth_diary_pages_v1');
+                const savedWish = localStorage.getItem('friendsbooth_wishlist_v1');
+
+                if (savedPages) {
+                    state.diaryPages = JSON.parse(savedPages);
+                } else {
+                    state.diaryPages = [
+                        {
+                            id: 'page-1',
+                            type: 'custom',
+                            title: 'Day One in the Booth',
+                            note: 'We are in completely different places but still acting like absolute menaces on camera.',
+                            fontFamily: 'font-hand',
+                            textColor: '#51463D',
+                            photoUrl: '',
+                            photoScale: 0.85,
+                            photoRotate: -2
+                        },
+                        {
+                            id: 'page-checklist',
+                            type: 'checklist',
+                            title: 'list of ppl I want a pic with:'
+                        },
+                        {
+                            id: 'page-bio',
+                            type: 'bio',
+                            title: 'About Ray'
+                        }
+                    ];
+                }
+
+                if (savedWish) {
+                    state.wishlistItems = JSON.parse(savedWish);
+                } else {
+                    state.wishlistItems = WISHLIST_DEFAULT_NAMES.map((name, idx) => ({
+                        id: 'wish-' + idx,
+                        name,
+                        checked: false
+                    }));
+                }
+            } catch (e) {
+                state.diaryPages = [
+                    {
+                        id: 'page-1',
+                        type: 'custom',
+                        title: 'Day One in the Booth',
+                        note: 'Write anything here and stick your photo!',
+                        fontFamily: 'font-hand',
+                        textColor: '#51463D',
+                        photoUrl: '',
+                        photoScale: 0.85,
+                        photoRotate: -2
+                    },
+                    { id: 'page-checklist', type: 'checklist', title: 'list of ppl I want a pic with:' },
+                    { id: 'page-bio', type: 'bio', title: 'About Ray' }
+                ];
+                state.wishlistItems = WISHLIST_DEFAULT_NAMES.map((name, idx) => ({
+                    id: 'wish-' + idx,
+                    name,
+                    checked: false
+                }));
+            }
+        }
+
+        function saveDiaryData() {
+            try {
+                localStorage.setItem('friendsbooth_diary_pages_v1', JSON.stringify(state.diaryPages));
+                localStorage.setItem('friendsbooth_wishlist_v1', JSON.stringify(state.wishlistItems));
+            } catch (e) {}
+        }
+
+        function addNewDiaryPage() {
+            const checklistIdx = state.diaryPages.findIndex(p => p.type === 'checklist');
+            const insertAt = checklistIdx >= 0 ? checklistIdx : state.diaryPages.length;
+            const newPage = {
+                id: 'page-' + Date.now(),
+                type: 'custom',
+                title: `Memory Page #${insertAt + 1}`,
+                note: 'New page! Type your note, pick a font, and attach a photo.',
+                fontFamily: 'font-hand',
+                textColor: '#51463D',
+                photoUrl: state.finalImageDataUrl || '',
+                photoScale: 0.85,
+                photoRotate: 2
+            };
+            state.diaryPages.splice(insertAt, 0, newPage);
+            state.diaryCurrentPage = insertAt;
+            saveDiaryData();
+            renderDiaryBook();
+            showToast('Added a new diary page!');
         }
 
         function prevDiaryPage() {
-            if (state.diary.currentPage > 0) {
-                state.diary.currentPage--;
+            if (state.diaryCurrentPage > 0) {
+                state.diaryCurrentPage--;
                 renderDiaryBook();
-            }
-        }
-
-        function updatePageTitle(idx, val) { state.diary.pages[idx].title = val; }
-        function updatePageText(idx, val) { state.diary.pages[idx].text = val; }
-        function updatePageFont(idx, val) { state.diary.pages[idx].font = val; renderDiaryBook(); }
-
-        function attachPhotoToCurrentPage(idx) {
-            const finalCanvas = document.getElementById('final-composite-canvas');
-            if (state.capturedPoses.length > 0 && finalCanvas) {
-                state.diary.pages[idx].attachedPhoto = finalCanvas.toDataURL('image/png');
-                renderDiaryBook();
-                showToast('Attached photobooth strip to diary page!');
             } else {
-                showToast('Take a photo in the studio first!');
+                state.diaryCurrentPage = state.diaryPages.length - 1;
+                renderDiaryBook();
             }
         }
-        function removeAttachedPhoto(idx) {
-            state.diary.pages[idx].attachedPhoto = null;
+
+        function nextDiaryPage() {
+            if (state.diaryCurrentPage < state.diaryPages.length - 1) {
+                state.diaryCurrentPage++;
+                renderDiaryBook();
+            } else {
+                state.diaryCurrentPage = 0;
+                renderDiaryBook();
+            }
+        }
+
+        function renderDiaryBook() {
+            const container = document.getElementById('diaryBookContainer');
+            const content = document.getElementById('diaryPageContent');
+            if (!container || !content) return;
+
+            // Replay page turn animation
+            container.classList.remove('diary-page-turn');
+            void container.offsetWidth;
+            container.classList.add('diary-page-turn');
+
+            const total = state.diaryPages.length;
+            const idx = Math.max(0, Math.min(state.diaryCurrentPage, total - 1));
+            state.diaryCurrentPage = idx;
+
+            setText('diaryPageIndicator', `Page ${idx + 1} / ${total}`);
+
+            const page = state.diaryPages[idx];
+            if (!page) return;
+
+            if (page.type === 'checklist') {
+                content.innerHTML = renderChecklistPageHTML(page);
+            } else if (page.type === 'bio') {
+                content.innerHTML = renderRayBioPageHTML(page);
+            } else {
+                content.innerHTML = renderCustomDiaryPageHTML(page, idx);
+            }
+            refreshIcons();
+        }
+
+        function renderCustomDiaryPageHTML(page, idx) {
+            const photoBlock = page.photoUrl
+                ? `
+                    <div class="flex flex-col items-center justify-center p-3 bg-paper rounded-xl border border-espresso/40">
+                        <img src="${page.photoUrl}" alt="Stuck photo"
+                            style="transform: scale(${page.photoScale || 0.85}) rotate(${page.photoRotate || 0}deg);"
+                            class="max-h-72 w-auto rounded-lg border-2 border-espresso shadow-hardSm transition-transform duration-150" />
+                        <div class="mt-3 w-full max-w-xs space-y-2 font-mono text-[11px]">
+                            <div class="flex justify-between">
+                                <span>Photo Size</span>
+                                <span>${Math.round((page.photoScale || 0.85) * 100)}%</span>
+                            </div>
+                            <input type="range" min="40" max="125" value="${Math.round((page.photoScale || 0.85) * 100)}"
+                                oninput="updateDiaryPhotoScale(${idx}, this.value)" class="w-full accent-[#D88772]" />
+                            <div class="flex justify-between">
+                                <span>Photo Tilt</span>
+                                <span>${page.photoRotate || 0}°</span>
+                            </div>
+                            <input type="range" min="-20" max="20" value="${page.photoRotate || 0}"
+                                oninput="updateDiaryPhotoRotate(${idx}, this.value)" class="w-full accent-[#D88772]" />
+                        </div>
+                    </div>
+                  `
+                : `
+                    <div class="h-64 rounded-xl border-2 border-dashed border-espresso/40 bg-paper/70 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                        <i data-lucide="image-plus" class="w-7 h-7 text-espresso/60"></i>
+                        <p class="font-mono text-xs text-espresso/75">No photo stuck to this page yet.</p>
+                        <label class="btn-brutal bg-butter px-3 py-1.5 font-mono text-xs cursor-pointer">
+                            <span>Stick Photo From Device</span>
+                            <input type="file" accept="image/*" onchange="uploadDiaryPhoto(${idx}, event)" class="hidden" />
+                        </label>
+                    </div>
+                  `;
+
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <div class="lg:col-span-6 space-y-3">
+                        <input type="text" value="${escapeAttr(page.title)}"
+                            oninput="updateDiaryField(${idx}, 'title', this.value)"
+                            class="w-full bg-transparent font-display font-bold text-2xl sm:text-3xl border-b border-dashed border-espresso/30 pb-1 focus:outline-none" />
+
+                        <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                            <span class="text-espresso/70">Font:</span>
+                            <select onchange="updateDiaryField(${idx}, 'fontFamily', this.value)" class="bg-cream border border-espresso rounded-lg px-2 py-1">
+                                <option value="font-hand" ${page.fontFamily === 'font-hand' ? 'selected' : ''}>Handwriting (Caveat)</option>
+                                <option value="font-sans" ${page.fontFamily === 'font-sans' ? 'selected' : ''}>Clean (DM Sans)</option>
+                                <option value="font-display" ${page.fontFamily === 'font-display' ? 'selected' : ''}>Editorial (Space Grotesk)</option>
+                                <option value="font-mono" ${page.fontFamily === 'font-mono' ? 'selected' : ''}>Typewriter (DM Mono)</option>
+                            </select>
+
+                            <span class="text-espresso/70 ml-1">Ink:</span>
+                            <input type="color" value="${page.textColor || '#51463D'}"
+                                oninput="updateDiaryField(${idx}, 'textColor', this.value)"
+                                class="w-7 h-7 rounded border border-espresso cursor-pointer" />
+                        </div>
+
+                        <textarea rows="7" oninput="updateDiaryField(${idx}, 'note', this.value)"
+                            style="color: ${page.textColor || '#51463D'};"
+                            class="w-full bg-paper/70 border border-espresso/40 rounded-xl p-3.5 ${page.fontFamily || 'font-hand'} text-2xl leading-relaxed focus:outline-none">${escapeHtml(page.note)}</textarea>
+                    </div>
+
+                    <div class="lg:col-span-6 space-y-2">
+                        ${photoBlock}
+                        ${page.photoUrl ? `
+                            <div class="flex justify-end">
+                                <label class="font-mono text-[11px] underline text-espresso/75 hover:text-espresso cursor-pointer">
+                                    Replace Photo
+                                    <input type="file" accept="image/*" onchange="uploadDiaryPhoto(${idx}, event)" class="hidden" />
+                                </label>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderChecklistPageHTML(page) {
+            const rowsHTML = state.wishlistItems.map((item, i) => `
+                <div class="flex items-center justify-between gap-2 bg-paper/80 border border-espresso/30 rounded-lg px-3 py-1.5">
+                    <label class="flex items-center gap-2.5 flex-1 cursor-pointer">
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleWishlistItem(${i})" class="w-4 h-4 accent-[#D88772]" />
+                        <input type="text" value="${escapeAttr(item.name)}"
+                            oninput="editWishlistName(${i}, this.value)"
+                            class="w-full bg-transparent font-hand text-xl ${item.checked ? 'line-through opacity-60' : ''} focus:outline-none" />
+                    </label>
+                    <button onclick="removeWishlistItem(${i})" title="Remove" class="text-espresso/50 hover:text-terracotta font-mono text-xs px-1">✕</button>
+                </div>
+            `).join('');
+
+            return `
+                <div class="max-w-3xl mx-auto space-y-4 pb-8">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-dashed border-espresso/30 pb-3">
+                        <h3 class="font-hand font-bold text-3xl sm:text-4xl text-espresso">${escapeHtml(page.title)}</h3>
+                        <button onclick="nextDiaryPage()" class="btn-brutal bg-butter px-3 py-1.5 font-mono text-xs">
+                            Turn to Ray's Bio →
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                        ${rowsHTML}
+                    </div>
+
+                    <div class="pt-2 flex flex-wrap items-center gap-2">
+                        <input id="newWishlistNameInput" type="text" placeholder="Add another friend name..."
+                            class="bg-cream border border-espresso rounded-lg px-3 py-1.5 font-mono text-xs flex-1 min-w-[180px]" />
+                        <button onclick="addWishlistItem()" class="btn-brutal bg-sage/70 px-3.5 py-1.5 font-mono text-xs">
+                            + Add Name
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderRayBioPageHTML(page) {
+            return `
+                <div class="max-w-2xl mx-auto py-4 sm:py-6 space-y-5 pb-10">
+                    <div class="inline-block bg-butter border border-espresso rounded-full px-3 py-1 font-mono text-xs">
+                        FINAL PAGE • CREATOR NOTE
+                    </div>
+
+                    <div class="bg-paper border-2 border-espresso rounded-2xl p-6 sm:p-8 shadow-hardSm space-y-3 font-hand text-2xl sm:text-3xl leading-snug text-espresso">
+                        <p>Yo! I'm Ray (Rayaan)!..</p>
+                        <p>ummm</p>
+                        <p>made this because my friends live inconveniently far away.</p>
+                        <p>blame me for everything else.</p>
+                        <p>if you have complaints, please keep them to yourself. (jk!! Reach me!!, i don't bite. usually.)</p>
+                        <p>if you have memes, send them.</p>
+                        <p class="pt-2 font-mono text-lg sm:text-xl font-bold text-terracotta">↗ @the_rayaan_k</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateDiaryField(idx, key, val) {
+            if (!state.diaryPages[idx]) return;
+            state.diaryPages[idx][key] = val;
+            saveDiaryData();
+        }
+
+        function updateDiaryPhotoScale(idx, val) {
+            if (!state.diaryPages[idx]) return;
+            state.diaryPages[idx].photoScale = parseInt(val, 10) / 100;
+            saveDiaryData();
             renderDiaryBook();
         }
 
-        function stickPhotoToDiary() {
-            showView('diary');
-            attachPhotoToCurrentPage(0);
-        }
-
-        function toggleChecklistItem(i) {
-            state.diary.checklist[i].done = !state.diary.checklist[i].done;
+        function updateDiaryPhotoRotate(idx, val) {
+            if (!state.diaryPages[idx]) return;
+            state.diaryPages[idx].photoRotate = parseInt(val, 10);
+            saveDiaryData();
             renderDiaryBook();
         }
 
-        // AUDIO SOUND SYNTHESIZER
-        function playBeepSound(freq) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.15);
-            } catch(e) {}
+        function uploadDiaryPhoto(idx, event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file || !state.diaryPages[idx]) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                state.diaryPages[idx].photoUrl = e.target.result;
+                saveDiaryData();
+                renderDiaryBook();
+                showToast('Photo stuck to diary page!');
+            };
+            reader.readAsDataURL(file);
         }
 
-        function playSnapSound() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                osc.type = 'triangle';
-                osc.frequency.value = 1200;
-                osc.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.08);
-            } catch(e) {}
+        function toggleWishlistItem(i) {
+            if (!state.wishlistItems[i]) return;
+            state.wishlistItems[i].checked = !state.wishlistItems[i].checked;
+            saveDiaryData();
+            renderDiaryBook();
         }
 
-        // TOAST SYSTEM
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed bottom-6 right-6 z-50 bg-espresso text-cream font-mono text-xs px-4 py-3 rounded-2xl border-2 border-butter shadow-2xl flex items-center gap-2';
-            toast.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-butter"></i> <span>${msg}</span>`;
-            document.body.appendChild(toast);
-            lucide.createIcons();
-            setTimeout(() => toast.remove(), 3000);
+        function editWishlistName(i, val) {
+            if (!state.wishlistItems[i]) return;
+            state.wishlistItems[i].name = val;
+            saveDiaryData();
         }
+
+        function removeWishlistItem(i) {
+            state.wishlistItems.splice(i, 1);
+            saveDiaryData();
+            renderDiaryBook();
+        }
+
+        function addWishlistItem() {
+            const input = document.getElementById('newWishlistNameInput');
+            if (!input) return;
+            const val = input.value.trim();
+            if (!val) return;
+            state.wishlistItems.push({
+                id: 'wish-' + Date.now(),
+                name: val,
+                checked: false
+            });
+            input.value = '';
+            saveDiaryData();
+            renderDiaryBook();
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function escapeAttr(str) {
+            return escapeHtml(str).replace(/"/g, '&quot;');
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
