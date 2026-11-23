@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FriendsBooth.io — east or west Abrish is the best</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vanilla: '#F3EBDD',
+                        cream: '#FBF7F0',
+                        sand: '#E9DFCF',
+                        espresso: '#51463D',
+                        terracotta: '#D88772',
+                        sage: '#A5B494',
+                        butter: '#E9CB73',
+                        dustyblue: '#A8BAC4',
+                        caramel: '#D9B99B'
+                    },
+                    fontFamily: {
+                        sans: ['"DM Sans"', 'sans-serif'],
+                        display: ['"Space Grotesk"', 'sans-serif'],
+                        mono: ['"DM Mono"', 'monospace'],
+                        hand: ['"Caveat"', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MediaPipe Selfie Segmentation CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            background-color: #F3EBDD;
+            color: #51463D;
+            font-family: 'DM Sans', sans-serif;
+            overflow-x: hidden;
+            background-image: radial-gradient(#51463D 0.4px, transparent 0.4px);
+            background-size: 16px 16px;
+        }
+
+        .paper-card {
+            background-color: #FBF7F0;
+            border: 2px solid #51463D;
+            box-shadow: 4px 4px 0px #51463D;
+        }
+
+        .paper-button {
+            background-color: #D88772;
+            color: #FBF7F0;
+            border: 2px solid #51463D;
+            box-shadow: 3px 3px 0px #51463D;
+            transition: all 0.15s ease-in-out;
+            font-weight: 700;
+        }
+        .paper-button:hover {
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px #51463D;
+        }
+        .paper-button:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #51463D;
+        }
+
+        .paper-button-secondary {
+            background-color: #FBF7F0;
+            color: #51463D;
+            border: 2px solid #51463D;
+            box-shadow: 3px 3px 0px #51463D;
+            transition: all 0.15s ease-in-out;
+            font-weight: 700;
+        }
+        .paper-button-secondary:hover {
+            background-color: #E9DFCF;
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px #51463D;
+        }
+
+        /* 3D Book Page Flip Styles */
+        .book-container {
+            perspective: 1500px;
+        }
+        .book-page {
+            transform-origin: left center;
+            transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform-style: preserve-3d;
+        }
+        .book-page.flipped {
+            transform: rotateY(-180deg);
+        }
+
+        /* Screen Flash */
+        @keyframes flash-white {
+            0% { opacity: 0; }
+            30% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .flash-overlay {
+            animation: flash-white 0.5s ease-out forwards;
+        }
+
+        /* Filters */
+        .filter-warm { filter: sepia(0.2) contrast(1.05) saturate(1.1); }
+        .filter-disposable { filter: contrast(1.2) saturate(1.25) sepia(0.15); }
+        .filter-bw { filter: grayscale(1) contrast(1.2); }
+        .filter-anime { filter: contrast(1.1) saturate(1.4) brightness(1.05); }
+        .filter-spidey { filter: contrast(1.3) saturate(1.5) hue-rotate(-10deg); }
+
+        /* Wiggle animations */
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        .animate-wiggle { animation: wiggle 3s ease-in-out infinite; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-terracotta selection:text-white relative pb-16">
+
+    <!-- Screen Flash Element -->
+    <div id="flash-element" class="fixed inset-0 bg-white pointer-events-none z-50 opacity-0"></div>
+
+    <!-- MAIN NAVBAR -->
+    <nav class="sticky top-0 z-40 border-b-2 border-espresso bg-vanilla/95 backdrop-blur-md px-4 md:px-8 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            
+            <!-- Brand Logo & Subtitle -->
+            <div class="flex flex-col cursor-pointer" onclick="showView('landing')">
+                <div class="flex items-center gap-2">
+                    <span class="font-display font-bold text-2xl md:text-3xl tracking-tight text-espresso">FriendsBooth.io</span>
+                    <span class="inline-block px-2.5 py-0.5 text-xs font-mono bg-butter text-espresso border border-espresso rounded-full font-bold shadow-[1px_1px_0px_#51463D]">
+                        v2.0 PRO
+                    </span>
+                </div>
+                <span class="font-hand text-base font-bold text-terracotta tracking-wide -mt-1 leading-none">
+                    east or west Abrish is the best
+                </span>
+            </div>
+
+            <!-- Nav Items -->
+            <div class="flex items-center gap-2 sm:gap-4">
+                <button onclick="showView('avatar')" class="paper-button-secondary text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold">
+                    <i data-lucide="user" class="w-4 h-4 text-terracotta"></i>
+                    <span class="hidden sm:inline">AVATAR CREATOR</span>
+                </button>
+                <button onclick="showView('diary')" class="paper-button-secondary text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold">
+                    <i data-lucide="book-open" class="w-4 h-4 text-sage"></i>
+                    <span class="hidden sm:inline">SCRAPBOOK DIARY</span>
+                </button>
+                <button onclick="openCreateModal()" class="paper-button text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-2">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span>CREATE BOOTH</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- VIEW CONTAINER -->
+    <main id="app-viewport" class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-8">
+
+        <!-- VIEW 1: LANDING PAGE -->
+        <section id="view-landing" class="space-y-12">
+            
+            <!-- Hero Banner -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-4 md:pt-6">
+                
+                <div class="lg:col-span-7 space-y-6 relative">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-sage/30 border border-espresso rounded-full">
+                        <span class="w-2 h-2 rounded-full bg-sage animate-ping"></span>
+                        <span class="font-mono text-xs uppercase tracking-widest font-bold">Synchronized Long-Distance Photo Studio</span>
+                    </div>
+
+                    <h1 class="font-display text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-espresso leading-[0.95] uppercase">
+                        YOU LIVE THERE.<br>
+                        I LIVE HERE.<br>
+                        <span class="text-terracotta underline decoration-butter decoration-wavy underline-offset-8">LET'S BE IN THIS.</span>
+                    </h1>
+
+                    <p class="text-base sm:text-lg text-espresso/90 max-w-xl font-medium leading-relaxed">
+                        "Distance is stupid. Let's take a picture." A synchronized virtual photo booth designed for long-distance friends, featuring live background removal, special Anime & Spider-Man strips, interactive avatar companions, and a scrapbook diary!
+                    </p>
+
+                    <!-- CTAs -->
+                    <div class="flex flex-wrap items-center gap-4 pt-2">
+                        <button onclick="openCreateModal()" class="paper-button text-base px-6 py-3.5 rounded-xl flex items-center gap-3 text-lg font-bold">
+                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                            <span>CREATE A BOOTH</span>
+                        </button>
+                        <button onclick="openJoinModal()" class="paper-button-secondary text-base px-6 py-3.5 rounded-xl font-bold">
+                            JOIN BOOTH CODE
+                        </button>
+                        <button onclick="showView('avatar')" class="paper-button-secondary text-base px-5 py-3.5 rounded-xl font-bold bg-butter/60">
+                            🎨 CREATE AVATAR
+                        </button>
+                    </div>
+
+                    <div class="pt-2 flex items-center gap-3">
+                        <span class="font-hand text-2xl font-bold text-terracotta">"east or west Abrish is the best"</span>
+                        <span class="font-mono text-xs text-espresso/60">• Ray's Friends Club</span>
+                    </div>
+                </div>
+
+                <!-- Hero Interactive Cards Preview -->
+                <div class="lg:col-span-5 relative">
+                    <div class="paper-card p-5 rounded-2xl bg-cream space-y-4 shadow-xl transform rotate-1 hover:rotate-0 transition-transform">
+                        <div class="flex items-center justify-between border-b border-espresso/20 pb-2 font-mono text-xs">
+                            <span class="font-bold">BOOTH #ANIME-SPIDEY</span>
+                            <span class="bg-butter px-2 py-0.5 rounded border border-espresso font-bold">SPECIAL EDITION</span>
+                        </div>
+
+                        <!-- 4-Strip Preview Mock -->
+                        <div class="grid grid-cols-2 gap-2 bg-espresso p-2 rounded-xl">
+                            <div class="aspect-square bg-sand rounded-lg border border-white flex items-center justify-center relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter-anime">
+                                <span class="absolute bottom-1 right-1 font-mono text-[9px] bg-red-600 text-white px-1 rounded font-bold">THWIP!</span>
+                            </div>
+                            <div class="aspect-square bg-sand rounded-lg border border-white flex items-center justify-center relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter-spidey">
+                                <span class="absolute top-1 left-1 font-mono text-[9px] bg-yellow-400 text-black px-1 rounded font-bold">ゴゴゴ</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between font-mono text-xs pt-1">
+                            <span>4-Shot Strip Synced</span>
+                            <span class="font-hand text-lg text-terracotta font-bold">"someone blinked."</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Features Showcase Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+                <div onclick="showView('avatar')" class="paper-card p-6 rounded-2xl space-y-3 bg-cream cursor-pointer hover:-translate-y-1 transition-transform">
+                    <div class="w-10 h-10 rounded-xl bg-butter flex items-center justify-center border border-espresso font-bold text-xl">👤</div>
+                    <h3 class="font-display text-xl font-bold uppercase text-espresso">Interactive Avatar Companion</h3>
+                    <p class="text-xs text-espresso/80">Mix 10 types of hair, eyes, nose, ears, mouth, facial hair, glasses, shirts, pants & shoes! Watch your avatar walk around your screen!</p>
+                </div>
+
+                <div onclick="openCreateModal()" class="paper-card p-6 rounded-2xl space-y-3 bg-cream cursor-pointer hover:-translate-y-1 transition-transform">
+                    <div class="w-10 h-10 rounded-xl bg-terracotta text-white flex items-center justify-center border border-espresso font-bold text-xl">📸</div>
+                    <h3 class="font-display text-xl font-bold uppercase text-espresso">Multi-Shot & Anime/Spidey Strips</h3>
+                    <p class="text-xs text-espresso/80">Take single shots, 4-photo classic strips, or 6-photo booth strips! Position and scale yourself live on stage before snapping.</p>
+                </div>
+
+                <div onclick="showView('diary')" class="paper-card p-6 rounded-2xl space-y-3 bg-cream cursor-pointer hover:-translate-y-1 transition-transform">
+                    <div class="w-10 h-10 rounded-xl bg-sage flex items-center justify-center border border-espresso font-bold text-xl">📖</div>
+                    <h3 class="font-display text-xl font-bold uppercase text-espresso">3D Scrapbook Diary</h3>
+                    <p class="text-xs text-espresso/80">Interactive 3D page flips! Stick your captured photobooth pictures, add pages, edit text, check Ray's friend checklist & bio!</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VIEW 2: LIVE PHOTO STUDIO ROOM -->
+        <section id="view-room" class="hidden space-y-6">
+            
+            <!-- Room Header Bar -->
+            <div class="paper-card p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-full bg-sage animate-pulse"></div>
+                    <div>
+                        <h2 id="room-header-title" class="font-display text-xl font-bold text-espresso uppercase">ROOM: FRIENDS-CLUB</h2>
+                        <div class="flex items-center gap-2 font-mono text-xs text-espresso/70">
+                            <span>CODE: <strong id="room-header-code" class="text-espresso">ABCD12</strong></span>
+                            <button onclick="copyRoomLink()" class="hover:text-terracotta underline flex items-center gap-1 font-bold">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copy Invite Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 font-mono text-xs">
+                    <button id="ready-btn" onclick="toggleReadyState()" class="paper-button-secondary text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                        <span id="ready-btn-text">I'M READY</span>
+                    </button>
+                    <button onclick="leaveRoom()" class="px-3.5 py-2 bg-red-100 hover:bg-red-200 text-red-800 border-2 border-red-400 rounded-xl font-bold transition">
+                        LEAVE
+                    </button>
+                </div>
+            </div>
+
+            <!-- Studio Workspace Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Stage View (Left) -->
+                <div class="lg:col-span-8 space-y-4">
+                    
+                    <div class="relative paper-card p-3 rounded-2xl bg-espresso overflow-hidden min-h-[420px] flex flex-col justify-center">
+                        
+                        <!-- Selected Scene Overlay -->
+                        <div id="scene-bg-overlay" class="absolute inset-0 bg-cover bg-center transition-all duration-500 opacity-90" style="background-image: url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80');"></div>
+                        
+                        <!-- Special Edition SVG Overlays (Anime / Spider-Man) -->
+                        <div id="anime-overlay" class="absolute inset-0 pointer-events-none hidden bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+                        <div id="spidey-overlay" class="absolute inset-0 pointer-events-none hidden border-8 border-red-600">
+                            <div class="absolute top-2 left-2 bg-yellow-400 text-black font-display font-extrabold px-3 py-1 border-2 border-black -rotate-3 text-sm">THWIP!</div>
+                            <div class="absolute bottom-2 right-2 bg-blue-600 text-white font-display font-extrabold px-3 py-1 border-2 border-black rotate-3 text-sm">FRIENDSBOOTH!</div>
+                        </div>
+
+                        <!-- Live Stage Display Canvas -->
+                        <div class="relative z-10 w-full h-full flex items-center justify-center min-h-[380px]" id="stage-container">
+                            <canvas id="live-stage-canvas" width="800" height="500" class="max-w-full h-auto rounded-xl border-2 border-white shadow-2xl cursor-move"></canvas>
+                        </div>
+
+                        <!-- Floating Canvas Watermark -->
+                        <div class="absolute bottom-3 right-4 z-20 font-mono text-[10px] text-cream bg-espresso/80 px-2 py-0.5 rounded border border-white/20">
+                            FriendsBooth.io • Synchronized Live Stage
+                        </div>
+                    </div>
+
+                    <!-- Multi-Shot Thumbnail Sequence Bar -->
+                    <div id="multi-shot-tray" class="hidden paper-card p-3 rounded-xl bg-sand/60 space-y-2">
+                        <span class="font-mono text-xs font-bold text-espresso block">MULTI-SHOT CAPTURED POSES:</span>
+                        <div id="thumbnails-container" class="flex gap-2 overflow-x-auto pb-1">
+                            <!-- Snapped poses will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Stage Positioning & Scale Controls -->
+                    <div class="paper-card p-3.5 rounded-xl bg-cream flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
+                        <div class="flex items-center gap-4">
+                            <span class="font-bold text-espresso flex items-center gap-1">
+                                <i data-lucide="move" class="w-4 h-4"></i> Position & Scale:
+                            </span>
+                            <label class="flex items-center gap-1">
+                                <span>X:</span>
+                                <input type="range" id="pos-x-range" min="-200" max="200" value="0" oninput="updateStagePosition()" class="w-20">
+                            </label>
+                            <label class="flex items-center gap-1">
+                                <span>Y:</span>
+                                <input type="range" id="pos-y-range" min="-150" max="150" value="0" oninput="updateStagePosition()" class="w-20">
+                            </label>
+                            <label class="flex items-center gap-1">
+                                <span>Scale:</span>
+                                <input type="range" id="scale-range" min="0.5" max="2" step="0.1" value="1" oninput="updateStagePosition()" class="w-20">
+                            </label>
+                        </div>
+                        <button onclick="resetStagePosition()" class="hover:underline text-terracotta font-bold">Reset Pos</button>
+                    </div>
+
+                </div>
+
+                <!-- Right Studio Control Dock -->
+                <div class="lg:col-span-4 space-y-4">
+                    
+                    <div class="paper-card p-5 rounded-2xl space-y-4">
+                        <h3 class="font-display text-lg font-bold uppercase text-espresso border-b border-espresso/20 pb-2 flex items-center justify-between">
+                            <span>Studio Controls</span>
+                            <i data-lucide="sliders" class="w-4 h-4"></i>
+                        </h3>
+
+                        <!-- Trigger Capture Button -->
+                        <div class="space-y-2 bg-sand/40 p-3 rounded-xl border border-espresso/30">
+                            <label class="font-mono text-xs font-bold text-espresso block">PHOTO MODE SEQUENCE</label>
+                            <select id="select-mode" onchange="changeCaptureMode(this.value)" class="w-full bg-cream border border-espresso rounded-lg p-2 font-mono text-xs font-bold">
+                                <option value="1">SINGLE GROUP SHOT (1 Photo)</option>
+                                <option value="4">CLASSIC PHOTO STRIP (4 Sequential Shots)</option>
+                                <option value="6">BOOTH STRIP (6 Sequential Shots)</option>
+                            </select>
+
+                            <button id="trigger-capture-btn" onclick="startPhotoCaptureSequence()" class="paper-button w-full py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 mt-2">
+                                <i data-lucide="camera" class="w-5 h-5"></i>
+                                <span id="capture-btn-label">TAKE PHOTO</span>
+                            </button>
+                        </div>
+
+                        <!-- Special Edition & Scene Selector -->
+                        <div class="space-y-2">
+                            <label class="font-mono text-xs font-bold text-espresso block">SPECIAL TEMPLATE & SCENE</label>
+                            <select id="select-scene" onchange="changeScene(this.value)" class="w-full bg-cream border border-espresso rounded-lg p-2 font-mono text-xs font-bold">
+                                <optgroup label="🌟 Special Editions">
+                                    <option value="anime">⚡ Anime Screentone & Katakana SFX</option>
+                                    <option value="spidey">🕷️ Spider-Man Comic Edition</option>
+                                </optgroup>
+                                <optgroup label="🏞️ Shared Scenes">
+                                    <option value="cafe">Vintage Café Studio</option>
+                                    <option value="space">Outer Space Constellations</option>
+                                    <option value="beach">Sunset Beach Paradise</option>
+                                    <option value="arcade">Japanese Neon Arcade</option>
+                                    <option value="greenhouse">Botanical Greenhouse</option>
+                                </optgroup>
+                            </select>
+                        </div>
+
+                        <!-- Background Removal Toggle -->
+                        <div class="flex items-center justify-between bg-cream p-3 rounded-xl border border-espresso/20">
+                            <span class="font-mono text-xs font-bold text-espresso">REMOVE BACKGROUND</span>
+                            <button id="bg-toggle-btn" onclick="toggleBackgroundRemoval()" class="font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso bg-sage text-espresso">
+                                ON
+                            </button>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="space-y-2">
+                            <label class="font-mono text-xs font-bold text-espresso block">ANALOG FILTER</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setFilter('filter-warm')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">Warm Film</button>
+                                <button onclick="setFilter('filter-disposable')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">Disposable</button>
+                                <button onclick="setFilter('filter-bw')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">B&W Silver</button>
+                                <button onclick="setFilter('filter-anime')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">Anime Vibrant</button>
+                            </div>
+                        </div>
+
+                        <!-- Media Device Toggles -->
+                        <div class="pt-2 border-t border-espresso/20 flex items-center justify-between font-mono text-xs">
+                            <button id="toggle-cam-btn" onclick="toggleCamera()" class="flex items-center gap-1 text-espresso hover:text-terracotta font-bold">
+                                <i data-lucide="video" class="w-4 h-4"></i> <span>Cam On</span>
+                            </button>
+                            <button onclick="toggleVirtualSim()" class="flex items-center gap-1 text-terracotta hover:underline font-bold">
+                                🤖 Add Friend Sim
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- VIEW 3: COUNTDOWN OVERLAY -->
+        <div id="countdown-modal" class="fixed inset-0 z-50 bg-espresso/85 backdrop-blur-md flex flex-col items-center justify-center text-cream hidden">
+            <div class="text-center space-y-4">
+                <span id="countdown-subtext" class="font-mono text-base tracking-widest text-butter uppercase font-bold">SYNCHRONIZED CAPTURE IN</span>
+                <div id="countdown-number" class="font-display text-9xl md:text-[14rem] font-extrabold text-butter tracking-tighter">
+                    3
+                </div>
+                <div class="font-hand text-3xl md:text-4xl text-cream font-bold animate-bounce">
+                    "Smile like the Wi-Fi isn't struggling!"
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 4: PHOTO DEVELOPING DARKROOM VIEW -->
+        <section id="view-developing" class="hidden min-h-[50vh] flex flex-col items-center justify-center space-y-6">
+            <div class="paper-card p-8 rounded-3xl max-w-lg w-full text-center space-y-6 bg-cream">
+                <div class="space-y-1">
+                    <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">DARKROOM PROCESSING</span>
+                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Developing Your Strip...</h2>
+                </div>
+
+                <div class="relative w-64 h-80 mx-auto bg-sand border-4 border-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center p-2">
+                    <img id="developing-img-preview" class="w-full h-full object-cover transition-all duration-2000 filter blur-md opacity-40" src="" alt="Developing">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-espresso/40 text-white font-mono text-xs gap-2">
+                        <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-butter"></i>
+                        <span id="developing-status-text" class="font-hand text-xl font-bold text-butter">"Developing questionable decisions..."</span>
+                    </div>
+                </div>
+
+                <button onclick="finishDevelopingImmediately()" class="paper-button-secondary text-xs px-4 py-2 rounded-xl font-bold">
+                    SKIP ANIMATION
+                </button>
+            </div>
+        </section>
+
+        <!-- VIEW 5: FINAL COMPOSITE RESULT & DOWNLOAD MODAL -->
+        <section id="view-result" class="hidden space-y-8 max-w-4xl mx-auto">
+            <div class="text-center space-y-2">
+                <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">CAPTURE COMPLETE</span>
+                <h2 class="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-espresso">Here is your photobooth strip!</h2>
+                <p class="font-hand text-2xl text-terracotta font-bold">"distance is a scam. look at you guys."</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                <!-- Composite Canvas Output -->
+                <div class="md:col-span-7 flex justify-center">
+                    <div class="paper-card p-3 rounded-2xl bg-cream shadow-2xl relative">
+                        <canvas id="final-composite-canvas" class="max-w-full h-auto rounded-lg border border-espresso/30"></canvas>
+                    </div>
+                </div>
+
+                <!-- Downloads & Scrapbook Actions -->
+                <div class="md:col-span-5 space-y-4">
+                    <div class="paper-card p-6 rounded-2xl space-y-4 bg-vanilla">
+                        <h3 class="font-display text-xl font-bold text-espresso uppercase border-b border-espresso/20 pb-2">Save & Keep</h3>
+                        
+                        <button onclick="downloadCompositePhoto()" class="paper-button w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-base">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                            <span>DOWNLOAD HIGH-RES STRIP</span>
+                        </button>
+
+                        <button onclick="stickPhotoToDiary()" class="paper-button-secondary w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm bg-sage/40">
+                            <i data-lucide="book-open" class="w-4 h-4"></i>
+                            <span>STICK TO SCRAPBOOK DIARY</span>
+                        </button>
+
+                        <button onclick="retakePhoto()" class="w-full py-2 text-espresso/70 hover:text-espresso font-mono text-xs text-center block underline font-bold">
+                            ← Retake photos in studio
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 6: AVATAR CREATOR STUDIO -->
+        <section id="view-avatar" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-espresso/20 pb-4">
+                <div>
+                    <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">CUSTOM COMPANION</span>
+                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Interactive Avatar Creator</h2>
+                </div>
+                <button onclick="showView('landing')" class="paper-button-secondary text-xs px-4 py-2 rounded-xl font-bold self-start">
+                    ← BACK TO HOME
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Avatar Live Preview Canvas Card -->
+                <div class="lg:col-span-5 flex flex-col items-center">
+                    <div class="paper-card p-6 rounded-3xl bg-cream space-y-4 w-full flex flex-col items-center">
+                        <div class="relative w-64 h-64 bg-sand rounded-2xl border-2 border-espresso overflow-hidden flex items-center justify-center shadow-inner">
+                            <canvas id="avatar-preview-canvas" width="300" height="300" class="w-full h-full object-contain"></canvas>
+                        </div>
+                        <div class="text-center">
+                            <span class="font-hand text-2xl font-bold text-terracotta">"Looking good!"</span>
+                            <p class="font-mono text-xs text-espresso/70">Your character walks at the bottom of your screen!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 10 Categories Customization Options Dock -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div class="paper-card p-6 rounded-3xl bg-cream space-y-6">
+                        
+                        <!-- Color Selectors -->
+                        <div class="flex flex-wrap gap-6 border-b border-espresso/20 pb-4">
+                            <div>
+                                <label class="font-mono text-xs font-bold text-espresso block mb-1">SKIN TONE</label>
+                                <div class="flex gap-2">
+                                    <button onclick="setAvatarColor('skin','#FFDFC4')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#FFDFC4"></button>
+                                    <button onclick="setAvatarColor('skin','#F0C8A0')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#F0C8A0"></button>
+                                    <button onclick="setAvatarColor('skin','#D09668')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#D09668"></button>
+                                    <button onclick="setAvatarColor('skin','#8D5524')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#8D5524"></button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="font-mono text-xs font-bold text-espresso block mb-1">HAIR COLOR</label>
+                                <div class="flex gap-2">
+                                    <button onclick="setAvatarColor('hair','#2C221E')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#2C221E"></button>
+                                    <button onclick="setAvatarColor('hair','#B14A21')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#B14A21"></button>
+                                    <button onclick="setAvatarColor('hair','#E5C158')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#E5C158"></button>
+                                    <button onclick="setAvatarColor('hair','#3B82F6')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#3B82F6"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 10 Category Selectors Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
+                            
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">1. HAIR STYLE (10)</label>
+                                <select onchange="setAvatarItem('hair', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Style 1: Short Spiky</option>
+                                    <option value="1">Style 2: Bob Cut</option>
+                                    <option value="2">Style 3: Curly Afro</option>
+                                    <option value="3">Style 4: Long Straight</option>
+                                    <option value="4">Style 5: Ponytail</option>
+                                    <option value="5">Style 6: Beanie Hat</option>
+                                    <option value="6">Style 7: Anime Spikes</option>
+                                    <option value="7">Style 8: Buzzcut</option>
+                                    <option value="8">Style 9: Side Part</option>
+                                    <option value="9">Style 10: Bald Top</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">2. EYES (10)</label>
+                                <select onchange="setAvatarItem('eyes', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Type 1: Classic Dots</option>
+                                    <option value="1">Type 2: Happy Arches</option>
+                                    <option value="2">Type 3: Anime Sparkles</option>
+                                    <option value="3">Type 4: Cool Dots</option>
+                                    <option value="4">Type 5: Wink Eye</option>
+                                    <option value="5">Type 6: Wide Open</option>
+                                    <option value="6">Type 7: Sleepy Lines</option>
+                                    <option value="7">Type 8: Heart Eyes</option>
+                                    <option value="8">Type 9: Star Eyes</option>
+                                    <option value="9">Type 10: Spider Goggles</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">3. NOSE (10)</label>
+                                <select onchange="setAvatarItem('nose', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Nose 1: Button Nose</option>
+                                    <option value="1">Nose 2: Pointy</option>
+                                    <option value="2">Nose 3: Round</option>
+                                    <option value="3">Nose 4: Hook Nose</option>
+                                    <option value="4">Nose 5: Tiny Dot</option>
+                                    <option value="5">Nose 6: Snout</option>
+                                    <option value="6">Nose 7: Square</option>
+                                    <option value="7">Nose 8: Piggy Nose</option>
+                                    <option value="8">Nose 9: Triangle</option>
+                                    <option value="9">Nose 10: Soft Line</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">4. MOUTH (10)</label>
+                                <select onchange="setAvatarItem('mouth', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Mouth 1: Gentle Smile</option>
+                                    <option value="1">Mouth 2: Big Grin</option>
+                                    <option value="2">Mouth 3: Open Cat Mouth</option>
+                                    <option value="3">Mouth 4: Neutral Line</option>
+                                    <option value="4">Mouth 5: Tongue Out</option>
+                                    <option value="5">Mouth 6: Surprised O</option>
+                                    <option value="6">Mouth 7: Smirk</option>
+                                    <option value="7">Mouth 8: Vampire Fangs</option>
+                                    <option value="8">Mouth 9: Whistle</option>
+                                    <option value="9">Mouth 10: Mustache Smile</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">5. EARS (10)</label>
+                                <select onchange="setAvatarItem('ears', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Ears 1: Standard Round</option>
+                                    <option value="1">Ears 2: Elf Pointy</option>
+                                    <option value="2">Ears 3: Small Lobes</option>
+                                    <option value="3">Ears 4: Big Ears</option>
+                                    <option value="4">Ears 5: Cat Ears Top</option>
+                                    <option value="5">Ears 6: Pierced Ring</option>
+                                    <option value="6">Ears 7: Headphones</option>
+                                    <option value="7">Ears 8: Bear Ears</option>
+                                    <option value="8">Ears 9: Goblin Ears</option>
+                                    <option value="9">Ears 10: Minimal Dots</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">6. BEARD / FACIAL HAIR (10)</label>
+                                <select onchange="setAvatarItem('beard', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Beard 1: Clean Shaven</option>
+                                    <option value="1">Beard 2: Full Beard</option>
+                                    <option value="2">Beard 3: Goatee</option>
+                                    <option value="3">Beard 4: Stubble</option>
+                                    <option value="4">Beard 5: Handlebar Mustache</option>
+                                    <option value="5">Beard 6: Wizard Beard</option>
+                                    <option value="6">Beard 7: Anchor Beard</option>
+                                    <option value="7">Beard 8: Soul Patch</option>
+                                    <option value="8">Beard 9: Mutton Chops</option>
+                                    <option value="9">Beard 10: Pencil Stache</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">7. GLASSES (10)</label>
+                                <select onchange="setAvatarItem('glasses', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Glasses 1: None</option>
+                                    <option value="1">Glasses 2: Round Frames</option>
+                                    <option value="2">Glasses 3: Retro Square</option>
+                                    <option value="3">Glasses 4: Cool Sunglasses</option>
+                                    <option value="4">Glasses 5: Heart Specs</option>
+                                    <option value="5">Glasses 6: Monocle</option>
+                                    <option value="6">Glasses 7: Anime Shiny Specs</option>
+                                    <option value="7">Glasses 8: VR Headset</option>
+                                    <option value="8">Glasses 9: Star Shades</option>
+                                    <option value="9">Glasses 10: Reading Glasses</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">8. SHIRT (10)</label>
+                                <select onchange="setAvatarItem('shirt', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Shirt 1: T-Shirt</option>
+                                    <option value="1">Shirt 2: Hoodie</option>
+                                    <option value="2">Shirt 3: Sweater</option>
+                                    <option value="3">Shirt 4: Denim Jacket</option>
+                                    <option value="4">Shirt 5: Hawaiian Shirt</option>
+                                    <option value="5">Shirt 6: Suit & Tie</option>
+                                    <option value="6">Shirt 7: Anime Robe</option>
+                                    <option value="7">Shirt 8: Spidey Suit</option>
+                                    <option value="8">Shirt 9: Tank Top</option>
+                                    <option value="9">Shirt 10: Striped Tee</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">9. PANTS (10)</label>
+                                <select onchange="setAvatarItem('pants', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Pants 1: Jeans</option>
+                                    <option value="1">Pants 2: Cargo Pants</option>
+                                    <option value="2">Pants 3: Shorts</option>
+                                    <option value="3">Pants 4: Sweatpants</option>
+                                    <option value="4">Pants 5: Hakama Skirt</option>
+                                    <option value="5">Pants 6: Overalls</option>
+                                    <option value="6">Pants 7: Pleated Skirt</option>
+                                    <option value="7">Pants 8: Track Pants</option>
+                                    <option value="8">Pants 9: Leather Pants</option>
+                                    <option value="9">Pants 10: Pattern Trousers</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="font-bold text-espresso">10. SHOES (10)</label>
+                                <select onchange="setAvatarItem('shoes', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
+                                    <option value="0">Shoes 1: High Kicks Sneakers</option>
+                                    <option value="1">Shoes 2: Leather Boots</option>
+                                    <option value="2">Shoes 3: Loafers</option>
+                                    <option value="3">Shoes 4: High Tops</option>
+                                    <option value="4">Shoes 5: Flip Flops</option>
+                                    <option value="5">Shoes 6: Roller Skates</option>
+                                    <option value="6">Shoes 7: Barefoot</option>
+                                    <option value="7">Shoes 8: Canvas Shoes</option>
+                                    <option value="8">Shoes 9: Dress Shoes</option>
+                                    <option value="9">Shoes 10: Bunny Slippers</option>
+                                </select>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- VIEW 7: 3D PAGE-TURNING SCRAPBOOK DIARY -->
+        <section id="view-diary" class="hidden space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-espresso/20 pb-4">
+                <div>
+                    <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">MEMORIES ARCHIVE</span>
+                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Interactive Scrapbook Diary</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="addDiaryPage()" class="paper-button text-xs px-4 py-2 rounded-xl font-bold flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>ADD NEW PAGE</span>
+                    </button>
+                    <button onclick="showView('landing')" class="paper-button-secondary text-xs px-4 py-2 rounded-xl font-bold">
+                        ← HOME
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3D Book Container -->
+            <div class="book-container w-full max-w-4xl mx-auto min-h-[550px] relative py-4">
+                
+                <div id="diary-book-wrapper" class="w-full h-full relative flex justify-center">
+                    <!-- Pages dynamically rendered here with 3D Flip -->
+                </div>
+
+                <!-- Page Flip Controls -->
+                <div class="flex items-center justify-between max-w-2xl mx-auto pt-6 font-mono text-xs">
+                    <button onclick="prevDiaryPage()" class="paper-button-secondary px-4 py-2 rounded-xl font-bold">
+                        ← PREVIOUS PAGE
+                    </button>
+                    <span id="diary-page-indicator" class="font-bold text-espresso">PAGE 1 OF 3</span>
+                    <button onclick="nextDiaryPage()" class="paper-button-secondary px-4 py-2 rounded-xl font-bold">
+                        NEXT PAGE →
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- WALKING AVATAR SCREEN COMPANION -->
+    <div id="walking-avatar-container" class="fixed bottom-0 left-10 z-40 cursor-grab active:cursor-grabbing pointer-events-auto flex flex-col items-center select-none" style="transform: translateX(0px);">
+        <!-- Speech Bubble -->
+        <div id="avatar-speech-bubble" class="bg-butter border-2 border-espresso px-3 py-1.5 rounded-xl text-xs font-hand font-bold text-espresso shadow-[2px_2px_0px_#51463D] mb-1 animate-bounce">
+            "POSE, IDIOT!"
+        </div>
+        <!-- Rendered Walking Canvas -->
+        <canvas id="walking-avatar-canvas" width="70" height="90" onclick="handleAvatarClick(event)"></canvas>
+    </div>
+
+    <!-- CREATE BOOTH MODAL -->
+    <div id="modal-create" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full bg-cream space-y-6 relative">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="space-y-1">
+                <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">START A BOOTH</span>
+                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Create FriendsBooth</h3>
+            </div>
+
+            <form onsubmit="handleCreateBoothSubmit(event)" class="space-y-4 font-mono text-xs">
+                <div class="space-y-1">
+                    <label class="font-bold text-espresso block">BOOTH NAME</label>
+                    <input type="text" id="create-booth-name" required value="Ray's Long Distance Club" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono font-bold focus:outline-none">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold text-espresso block">YOUR DISPLAY NAME</label>
+                    <input type="text" id="create-host-name" required value="Abrish" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono font-bold focus:outline-none">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="paper-button w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        <span>LAUNCH BOOTH STUDIO</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JOIN BOOTH MODAL -->
+    <div id="modal-join" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full bg-cream space-y-6 relative">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+
+            <div class="space-y-1">
+                <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">JOIN BOOTH</span>
+                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Enter Code</h3>
+            </div>
+
+            <form onsubmit="handleJoinBoothSubmit(event)" class="space-y-4 font-mono text-xs">
+                <div class="space-y-1">
+                    <label class="font-bold text-espresso block">ROOM CODE (6-DIGITS)</label>
+                    <input type="text" id="join-room-code" required placeholder="e.g. ABCD12" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono uppercase font-bold focus:outline-none">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="font-bold text-espresso block">YOUR DISPLAY NAME</label>
+                    <input type="text" id="join-user-name" required value="Friend" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono font-bold focus:outline-none">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="paper-button-secondary w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span>JOIN BOOTH</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t-2 border-espresso/20 py-6 px-4 bg-vanilla">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-espresso/70">
+            <div class="flex items-center gap-2">
+                <span class="font-display font-bold text-espresso text-lg">FriendsBooth.io</span>
+                <span>— Distance is stupid. Let's take a picture.</span>
+            </div>
+            <div class="font-hand text-lg font-bold text-terracotta">
+                east or west Abrish is the best • Ray (@the_rayaan_k)
+            </div>
+        </div>
+    </footer>
+
+    <!-- MAIN APP SCRIPT -->
+    <script>
+        // GLOBAL APP STATE
+        const state = {
+            currentView: 'landing',
+            roomCode: 'RAY123',
+            roomName: 'Friends Club',
+            userName: 'Abrish',
+            isReady: false,
+            localStream: null,
+            useSimulatedCam: false,
+            cameraActive: false,
+            segmentationActive: true,
+            selectedScene: 'anime', // anime, spidey, cafe, space, beach, arcade, greenhouse
+            selectedFilter: 'filter-warm',
+            captureMode: 1, // 1, 4, 6
+            capturedPoses: [], // array of Canvas data URLs
+            // Stage Positioning
+            stagePos: { x: 0, y: 0, scale: 1 },
+            // Avatar Configuration
+            avatar: {
+                skin: '#FFDFC4',
+                hairColor: '#2C221E',
+                hair: 0,
+                eyes: 0,
+                nose: 0,
+                mouth: 0,
+                ears: 0,
+                beard: 0,
+                glasses: 0,
+                shirt: 0,
+                pants: 0,
+                shoes: 0
+            },
+            // Companion Walking State
+            avatarWalk: {
+                x: 80,
+                targetX: 80,
+                isWalking: false,
+                legAngle: 0,
+                direction: 1
+            },
+            // Diary State
+            diary: {
+                currentPage: 0,
+                pages: [
+                    { id: 1, title: 'My Friends Memories', text: 'Stuck our best photobooth shots here! Distance is stupid.', font: 'font-hand', textScale: 1.2, attachedPhoto: null, photoScale: 1, photoRotate: -2 },
+                    { id: 2, title: 'Tokyo - NYC Reunion', text: 'We took this at 3 AM across timezones. Best moment ever!', font: 'font-hand', textScale: 1.1, attachedPhoto: null, photoScale: 1, photoRotate: 3 }
+                ],
+                checklist: [
+                    { name: 'Bhav', done: true },
+                    { name: 'Tixiee', done: true },
+                    { name: 'Dig', done: false },
+                    { name: 'Cookie', done: true },
+                    { name: 'Abbuu Dabbuu', done: false },
+                    { name: 'Ashuu', done: true },
+                    { name: 'Rivy', done: false },
+                    { name: 'Sanana', done: false },
+                    { name: 'Abhi', done: true },
+                    { name: 'yohohoo', done: false },
+                    { name: 'Subie Negi', done: false },
+                    { name: 'Pippo', done: false },
+                    { name: 'ACM', done: true },
+                    { name: 'Anikiwi', done: false },
+                    { name: 'Shaurya', done: false },
+                    { name: 'wini da pooh', done: true },
+                    { name: 'vivi', done: false },
+                    { name: 'thugger', done: false }
+                ]
+            }
+        };
+
+        // SCENE IMAGES
+        const sceneImages = {
+            cafe: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80',
+            space: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1200&auto=format&fit=crop&q=80',
+            beach: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop&q=80',
+            arcade: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&auto=format&fit=crop&q=80',
+            greenhouse: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&auto=format&fit=crop&q=80',
+            anime: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1200&auto=format&fit=crop&q=80',
+            spidey: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80'
+        };
+
+        // DOM LOAD INITIALIZATION
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initAvatarWalkAnimation();
+            renderAvatarPreview();
+            renderDiaryBook();
+            
+            // Ground click to walk avatar
+            document.body.addEventListener('click', (e) => {
+                // Ignore if clicked inside interactive buttons or modals
+                if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select') || e.target.closest('.paper-card')) return;
+                state.avatarWalk.targetX = Math.max(20, Math.min(window.innerWidth - 80, e.clientX - 35));
+            });
+        });
+
+        // VIEW ROUTER
+        function showView(viewName) {
+            state.currentView = viewName;
+            const views = ['landing', 'room', 'developing', 'result', 'avatar', 'diary'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) {
+                    if (v === viewName) el.classList.remove('hidden');
+                    else el.classList.add('hidden');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (viewName === 'room') startStudioStage();
+            if (viewName === 'diary') renderDiaryBook();
+        }
+
+        // MODALS
+        function openCreateModal() { document.getElementById('modal-create').classList.remove('hidden'); }
+        function openJoinModal() { document.getElementById('modal-join').classList.remove('hidden'); }
+        function closeModals() {
+            document.getElementById('modal-create').classList.add('hidden');
+            document.getElementById('modal-join').classList.add('hidden');
+        }
+
+        function handleCreateBoothSubmit(e) {
+            e.preventDefault();
+            state.roomName = document.getElementById('create-booth-name').value;
+            state.userName = document.getElementById('create-host-name').value;
+            state.roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            closeModals();
+            showView('room');
+        }
+
+        function handleJoinBoothSubmit(e) {
+            e.preventDefault();
+            state.roomCode = document.getElementById('join-room-code').value.toUpperCase();
+            state.userName = document.getElementById('join-user-name').value;
+            closeModals();
+            showView('room');
+        }
+
+        // STUDIO STAGE & CAMERA ENGINE
+        async function startStudioStage() {
+            document.getElementById('room-header-title').innerText = `ROOM: ${state.roomName}`;
+            document.getElementById('room-header-code').innerText = state.roomCode;
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+                state.localStream = stream;
+                state.useSimulatedCam = false;
+            } catch(e) {
+                console.warn('Webcam unavailable. Activating procedural studio fallback camera.', e);
+                state.useSimulatedCam = true;
+            }
+            state.cameraActive = true;
+            requestAnimationFrame(renderStudioFrameLoop);
+        }
+
+        // LIVE CANVAS STAGE RENDER LOOP
+        function renderStudioFrameLoop() {
+            if (state.currentView !== 'room') return;
+            const canvas = document.getElementById('live-stage-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Draw Background Scene
+            const img = new Image();
+            img.src = sceneImages[state.selectedScene] || sceneImages.cafe;
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            // 2. Draw Special Theme Canvas Graphics
+            if (state.selectedScene === 'anime') {
+                ctx.fillStyle = 'rgba(255, 204, 0, 0.15)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#51463D';
+                ctx.font = 'bold 24px "Space Grotesk", sans-serif';
+                ctx.fillText('ゴゴゴゴ (GO GO GO)', 20, 40);
+            } else if (state.selectedScene === 'spidey') {
+                ctx.strokeStyle = '#DC2626';
+                ctx.lineWidth = 12;
+                ctx.strokeRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#DC2626';
+                ctx.font = 'bold 28px "Space Grotesk", sans-serif';
+                ctx.fillText('THWIP!', canvas.width - 120, 50);
+            }
+
+            // 3. Render Participant Cutout / Video / Sim
+            ctx.save();
+            const posX = canvas.width / 2 - 150 + state.stagePos.x;
+            const posY = canvas.height / 2 - 150 + state.stagePos.y;
+            const size = 300 * state.stagePos.scale;
+
+            if (state.useSimulatedCam || !state.localStream) {
+                // Procedural Simulated Video Feed (Animated Character)
+                ctx.fillStyle = '#FBF7F0';
+                ctx.strokeStyle = '#51463D';
+                ctx.lineWidth = 4;
+                ctx.fillRect(posX, posY, size, size);
+                ctx.strokeRect(posX, posY, size, size);
+
+                // Draw Avatar head in box
+                drawAvatarGraphic(ctx, posX + size/2, posY + size/2 + 20, size/200);
+
+                ctx.fillStyle = '#51463D';
+                ctx.font = 'bold 16px "DM Mono", monospace';
+                ctx.fillText(`${state.userName} (Studio Sim)`, posX + 15, posY + 30);
+            } else {
+                // Live Webcam Video frame
+                const videoEl = getHiddenVideoElement();
+                ctx.drawImage(videoEl, posX, posY, size, size);
+            }
+            ctx.restore();
+
+            requestAnimationFrame(renderStudioFrameLoop);
+        }
+
+        let hiddenVideo = null;
+        function getHiddenVideoElement() {
+            if (!hiddenVideo) {
+                hiddenVideo = document.createElement('video');
+                hiddenVideo.autoplay = true;
+                hiddenVideo.playsInline = true;
+                hiddenVideo.muted = true;
+                hiddenVideo.srcObject = state.localStream;
+            }
+            return hiddenVideo;
+        }
+
+        // STAGE CONTROLS
+        function updateStagePosition() {
+            state.stagePos.x = parseInt(document.getElementById('pos-x-range').value);
+            state.stagePos.y = parseInt(document.getElementById('pos-y-range').value);
+            state.stagePos.scale = parseFloat(document.getElementById('scale-range').value);
+        }
+
+        function resetStagePosition() {
+            state.stagePos = { x: 0, y: 0, scale: 1 };
+            document.getElementById('pos-x-range').value = 0;
+            document.getElementById('pos-y-range').value = 0;
+            document.getElementById('scale-range').value = 1;
+        }
+
+        function changeCaptureMode(val) {
+            state.captureMode = parseInt(val);
+            const btnLabel = document.getElementById('capture-btn-label');
+            if (state.captureMode === 1) btnLabel.innerText = 'TAKE PHOTO';
+            else btnLabel.innerText = `TAKE ${state.captureMode}-SHOT STRIP`;
+            showToast(`Mode set to ${val}-Shot Sequence`);
+        }
+
+        function changeScene(val) {
+            state.selectedScene = val;
+            const bgOverlay = document.getElementById('scene-bg-overlay');
+            const animeOver = document.getElementById('anime-overlay');
+            const spideyOver = document.getElementById('spidey-overlay');
+
+            bgOverlay.style.backgroundImage = `url('${sceneImages[val] || sceneImages.cafe}')`;
+
+            if (val === 'anime') {
+                animeOver.classList.remove('hidden');
+                spideyOver.classList.add('hidden');
+            } else if (val === 'spidey') {
+                spideyOver.classList.remove('hidden');
+                animeOver.classList.add('hidden');
+            } else {
+                animeOver.classList.add('hidden');
+                spideyOver.classList.add('hidden');
+            }
+        }
+
+        function toggleBackgroundRemoval() {
+            state.segmentationActive = !state.segmentationActive;
+            const btn = document.getElementById('bg-toggle-btn');
+            btn.innerText = state.segmentationActive ? 'ON' : 'OFF';
+            btn.className = `font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso ${state.segmentationActive ? 'bg-sage text-espresso' : 'bg-sand text-espresso'}`;
+        }
+
+        function setFilter(filterClass) {
+            state.selectedFilter = filterClass;
+            showToast(`Filter applied: ${filterClass}`);
+        }
+
+        function toggleCamera() {
+            if (state.localStream) {
+                const track = state.localStream.getVideoTracks()[0];
+                if (track) track.enabled = !track.enabled;
+            }
+        }
+
+        function toggleVirtualSim() {
+            state.useSimulatedCam = !state.useSimulatedCam;
+            showToast(state.useSimulatedCam ? 'Activated Fallback Studio Sim' : 'Switched to Webcam');
+        }
+
+        function toggleReadyState() {
+            state.isReady = !state.isReady;
+            const btn = document.getElementById('ready-btn-text');
+            btn.innerText = state.isReady ? 'YOU ARE READY!' : "I'M READY";
+        }
+
+        // PHOTO CAPTURE SEQUENCE ENGINE
+        async function startPhotoCaptureSequence() {
+            state.capturedPoses = [];
+            const tray = document.getElementById('multi-shot-tray');
+            const thumbContainer = document.getElementById('thumbnails-container');
+            thumbContainer.innerHTML = '';
+            if (state.captureMode > 1) tray.classList.remove('hidden');
+
+            for (let i = 0; i < state.captureMode; i++) {
+                await runCountdown(3, `SHOT ${i + 1} OF ${state.captureMode}`);
+                playSnapSound();
+                flashScreen();
+
+                // Capture snapshot frame from stage canvas
+                const stageCanvas = document.getElementById('live-stage-canvas');
+                const dataUrl = stageCanvas.toDataURL('image/png');
+                state.capturedPoses.push(dataUrl);
+
+                if (state.captureMode > 1) {
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    img.className = 'w-16 h-16 object-cover rounded-lg border-2 border-espresso shadow';
+                    thumbContainer.appendChild(img);
+                }
+            }
+
+            // Move to Darkroom reveal
+            startDevelopingSequence();
+        }
+
+        function runCountdown(sec, titleText) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('countdown-modal');
+                const numEl = document.getElementById('countdown-number');
+                const subtext = document.getElementById('countdown-subtext');
+                subtext.innerText = titleText;
+                modal.classList.remove('hidden');
+
+                let count = sec;
+                numEl.innerText = count;
+                playBeepSound(440);
+
+                const timer = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        numEl.innerText = count;
+                        playBeepSound(440);
+                    } else if (count === 0) {
+                        numEl.innerText = 'CHEESE!';
+                        playBeepSound(880);
+                    } else {
+                        clearInterval(timer);
+                        modal.classList.add('hidden');
+                        resolve();
+                    }
+                }, 900);
+            });
+        }
+
+        function flashScreen() {
+            const flash = document.getElementById('flash-element');
+            flash.classList.add('flash-overlay');
+            setTimeout(() => flash.classList.remove('flash-overlay'), 500);
+        }
+
+        // DARKROOM DEVELOPING
+        function startDevelopingSequence() {
+            showView('developing');
+            const preview = document.getElementById('developing-img-preview');
+            preview.src = state.capturedPoses[0];
+
+            setTimeout(() => {
+                preview.className = 'w-full h-full object-cover transition-all duration-1000 filter blur-0 opacity-100';
+            }, 800);
+
+            setTimeout(() => {
+                finishDevelopingImmediately();
+            }, 2500);
+        }
+
+        function finishDevelopingImmediately() {
+            renderFinalCompositeCanvas();
+            showView('result');
+        }
+
+        // FINAL COMPOSITE STRIP GENERATOR
+        function renderFinalCompositeCanvas() {
+            const canvas = document.getElementById('final-composite-canvas');
+            const ctx = canvas.getContext('2d');
+
+            const shots = state.capturedPoses.length;
+            canvas.width = 800;
+            canvas.height = shots === 1 ? 600 : (shots === 4 ? 1400 : 1800);
+
+            // Paper Background
+            ctx.fillStyle = '#F3EBDD';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Card Frame
+            ctx.fillStyle = '#FBF7F0';
+            ctx.strokeStyle = '#51463D';
+            ctx.lineWidth = 6;
+            ctx.fillRect(30, 30, canvas.width - 60, canvas.height - 60);
+            ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+
+            // Title Header
+            ctx.fillStyle = '#51463D';
+            ctx.font = 'bold 36px "Space Grotesk", sans-serif';
+            ctx.fillText(`FriendsBooth.io — ${state.roomName}`, 60, 90);
+
+            ctx.font = 'bold 20px "DM Mono", monospace';
+            ctx.fillText(`ROOM: #${state.roomCode} • ${new Date().toLocaleDateString()}`, 60, 125);
+
+            // Render Captured Shots
+            const frameW = canvas.width - 120;
+            const frameH = shots === 1 ? 400 : 260;
+            const startY = 150;
+
+            state.capturedPoses.forEach((dataUrl, idx) => {
+                const img = new Image();
+                img.src = dataUrl;
+                const fy = startY + idx * (frameH + 15);
+
+                ctx.fillStyle = '#E9DFCF';
+                ctx.fillRect(60, fy, frameW, frameH);
+                ctx.strokeRect(60, fy, frameW, frameH);
+                ctx.drawImage(img, 60, fy, frameW, frameH);
+            });
+
+            // Subtitle Footer
+            const footerY = canvas.height - 60;
+            ctx.font = 'bold 28px "Caveat", cursive';
+            ctx.fillStyle = '#D88772';
+            ctx.fillText('"east or west Abrish is the best — distance is a scam."', 60, footerY);
+        }
+
+        function downloadCompositePhoto() {
+            const canvas = document.getElementById('final-composite-canvas');
+            const link = document.createElement('a');
+            link.download = `FriendsBooth-${state.roomCode}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('High-Res Photo Strip Downloaded!');
+        }
+
+        function retakePhoto() {
+            showView('room');
+        }
+
+        function copyRoomLink() {
+            const url = `${window.location.origin}${window.location.pathname}?room=${state.roomCode}`;
+            if (navigator.clipboard) navigator.clipboard.writeText(url);
+            showToast('Invite link copied to clipboard!');
+        }
+
+        function leaveRoom() {
+            if (state.localStream) state.localStream.getTracks().forEach(t => t.stop());
+            showView('landing');
+        }
+
+        // AVATAR DRAWING ENGINE (10 Options for Hair, Eyes, Nose, Mouth, Ears, Beard, Glasses, Shirt, Pants, Shoes)
+        function setAvatarItem(cat, val) {
+            state.avatar[cat] = parseInt(val);
+            renderAvatarPreview();
+        }
+        function setAvatarColor(type, col) {
+            if (type === 'skin') state.avatar.skin = col;
+            if (type === 'hair') state.avatar.hairColor = col;
+            renderAvatarPreview();
+        }
+
+        function renderAvatarPreview() {
+            const canvas = document.getElementById('avatar-preview-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawAvatarGraphic(ctx, canvas.width / 2, canvas.height / 2 + 20, 1);
+            drawWalkingAvatarOnCanvas();
+        }
+
+        function drawAvatarGraphic(ctx, cx, cy, scale = 1) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(scale, scale);
+
+            const a = state.avatar;
+
+            // 1. Pants / Legs
+            ctx.fillStyle = ['#1D4ED8', '#374151', '#9CA3AF', '#059669', '#7C3AED', '#D97706', '#DB2777', '#4B5563', '#111827', '#E11D48'][a.pants];
+            ctx.fillRect(-25, 40, 20, 45);
+            ctx.fillRect(5, 40, 20, 45);
+
+            // 2. Shoes
+            ctx.fillStyle = ['#111827', '#78350F', '#D97706', '#DC2626', '#2563EB', '#059669', '#F59E0B', '#6B7280', '#000000', '#F472B6'][a.shoes];
+            ctx.fillRect(-28, 80, 25, 12);
+            ctx.fillRect(3, 80, 25, 12);
+
+            // 3. Shirt / Body
+            ctx.fillStyle = ['#DC2626', '#2563EB', '#059669', '#D97706', '#7C3AED', '#111827', '#F59E0B', '#EC4899', '#4B5563', '#0284C7'][a.shirt];
+            ctx.fillRect(-35, -20, 70, 65);
+
+            // 4. Ears
+            ctx.fillStyle = a.skin;
+            if (a.ears === 1) { // Elf ears
+                ctx.beginPath(); ctx.moveTo(-45, -50); ctx.lineTo(-55, -65); ctx.lineTo(-40, -40); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(45, -50); ctx.lineTo(55, -65); ctx.lineTo(40, -40); ctx.fill();
+            } else {
+                ctx.beginPath(); ctx.arc(-42, -50, 10, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(42, -50, 10, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // 5. Head / Skin
+            ctx.beginPath();
+            ctx.arc(0, -50, 40, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#51463D';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 6. Eyes
+            ctx.fillStyle = '#51463D';
+            if (a.eyes === 0) { // Dots
+                ctx.beginPath(); ctx.arc(-15, -55, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(15, -55, 4, 0, Math.PI * 2); ctx.fill();
+            } else if (a.eyes === 1) { // Arches
+                ctx.beginPath(); ctx.arc(-15, -55, 6, Math.PI, 0); ctx.stroke();
+                ctx.beginPath(); ctx.arc(15, -55, 6, Math.PI, 0); ctx.stroke();
+            } else if (a.eyes === 7) { // Hearts
+                ctx.fillStyle = '#E11D48';
+                ctx.fillText('♥', -20, -50); ctx.fillText('♥', 10, -50);
+            } else {
+                ctx.beginPath(); ctx.arc(-15, -55, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(15, -55, 5, 0, Math.PI * 2); ctx.fill();
+            }
+
+            // 7. Nose
+            ctx.fillStyle = '#51463D';
+            if (a.nose === 1) { ctx.fillRect(-2, -50, 4, 10); }
+            else { ctx.beginPath(); ctx.arc(0, -45, 3, 0, Math.PI * 2); ctx.fill(); }
+
+            // 8. Mouth
+            ctx.beginPath();
+            if (a.mouth === 1) { ctx.arc(0, -35, 10, 0, Math.PI); }
+            else { ctx.moveTo(-10, -35); ctx.lineTo(10, -35); }
+            ctx.stroke();
+
+            // 9. Beard
+            if (a.beard > 0) {
+                ctx.fillStyle = a.hairColor;
+                ctx.fillRect(-20, -30, 40, 15);
+            }
+
+            // 10. Glasses
+            if (a.glasses > 0) {
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-25, -63, 20, 15);
+                ctx.strokeRect(5, -63, 20, 15);
+                ctx.beginPath(); ctx.moveTo(-5, -55); ctx.lineTo(5, -55); ctx.stroke();
+            }
+
+            // 11. Hair
+            ctx.fillStyle = a.hairColor;
+            if (a.hair === 0) { // Short Spiky
+                ctx.beginPath(); ctx.arc(0, -65, 42, Math.PI, 0); ctx.fill();
+            } else if (a.hair === 1) { // Bob
+                ctx.fillRect(-44, -85, 88, 50);
+            } else if (a.hair === 5) { // Beanie
+                ctx.fillStyle = '#DC2626';
+                ctx.fillRect(-42, -90, 84, 35);
+            } else {
+                ctx.beginPath(); ctx.arc(0, -65, 43, Math.PI, 0); ctx.fill();
+            }
+
+            ctx.restore();
+        }
+
+        // WALKING SCREEN COMPANION
+        function initAvatarWalkAnimation() {
+            function loop() {
+                const w = state.avatarWalk;
+                if (Math.abs(w.x - w.targetX) > 4) {
+                    w.isWalking = true;
+                    w.direction = w.targetX > w.x ? 1 : -1;
+                    w.x += w.direction * 3;
+                    w.legAngle += 0.2;
+                } else {
+                    w.isWalking = false;
+                }
+
+                const container = document.getElementById('walking-avatar-container');
+                if (container) {
+                    container.style.transform = `translateX(${w.x}px)`;
+                }
+
+                drawWalkingAvatarOnCanvas();
+                requestAnimationFrame(loop);
+            }
+            requestAnimationFrame(loop);
+        }
+
+        function drawWalkingAvatarOnCanvas() {
+            const canvas = document.getElementById('walking-avatar-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawAvatarGraphic(ctx, 35, 45, 0.45);
+        }
+
+        function handleAvatarClick(e) {
+            e.stopPropagation();
+            const quotes = [
+                '"POSE, IDIOT!"',
+                '"east or west Abrish is the best"',
+                '"distance is a scam!"',
+                '"THWIP!"',
+                '"Ray says hi!"',
+                '"YOU LOOK GOOD BTW."'
+            ];
+            const bubble = document.getElementById('avatar-speech-bubble');
+            bubble.innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            playBeepSound(600);
+        }
+
+        // 3D SCRAPBOOK DIARY ENGINE
+        function renderDiaryBook() {
+            const wrapper = document.getElementById('diary-book-wrapper');
+            if (!wrapper) return;
+
+            const pageIndex = state.diary.currentPage;
+            const totalPages = state.diary.pages.length + 2; // +1 checklist, +1 bio page
+            document.getElementById('diary-page-indicator').innerText = `PAGE ${pageIndex + 1} OF ${totalPages}`;
+
+            wrapper.innerHTML = '';
+
+            const pageCard = document.createElement('div');
+            pageCard.className = 'paper-card p-8 rounded-3xl bg-cream max-w-xl w-full min-h-[480px] space-y-6 shadow-2xl relative border-4 border-espresso';
+
+            if (pageIndex < state.diary.pages.length) {
+                // User Entry Page
+                const pageData = state.diary.pages[pageIndex];
+                pageCard.innerHTML = `
+                    <div class="flex items-center justify-between border-b-2 border-espresso/20 pb-3">
+                        <input type="text" value="${pageData.title}" onchange="updatePageTitle(${pageIndex}, this.value)" class="font-display font-bold text-2xl bg-transparent text-espresso focus:outline-none w-full">
+                        <span class="font-mono text-xs bg-butter px-2 py-1 rounded font-bold border border-espresso">#PAGE_${pageIndex + 1}</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <textarea onchange="updatePageText(${pageIndex}, this.value)" class="w-full h-32 p-3 bg-vanilla/60 border-2 border-espresso rounded-2xl font-hand text-2xl text-espresso focus:outline-none">${pageData.text}</textarea>
+                        
+                        <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
+                            <label class="flex items-center gap-1 font-bold">
+                                <span>Font:</span>
+                                <select onchange="updatePageFont(${pageIndex}, this.value)" class="bg-sand border border-espresso rounded p-1 font-bold">
+                                    <option value="font-hand">Caveat Handwriting</option>
+                                    <option value="font-display">Space Grotesk</option>
+                                    <option value="font-mono">DM Mono</option>
+                                </select>
+                            </label>
+                            <button onclick="attachPhotoToCurrentPage(${pageIndex})" class="paper-button-secondary text-xs px-3 py-1.5 rounded-lg font-bold">
+                                📸 Attach Last Photobooth Strip
+                            </button>
+                        </div>
+
+                        ${pageData.attachedPhoto ? `
+                            <div class="relative p-2 bg-sand rounded-xl border-2 border-espresso shadow-lg transform rotate-2 mt-4">
+                                <img src="${pageData.attachedPhoto}" class="w-full h-40 object-cover rounded-lg">
+                                <button onclick="removeAttachedPhoto(${pageIndex})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">✕</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            } else if (pageIndex === state.diary.pages.length) {
+                // Penultimate Checklist Page
+                pageCard.innerHTML = `
+                    <div class="border-b-2 border-espresso/20 pb-2">
+                        <span class="font-mono text-xs font-bold text-terracotta">EDITABLE CHECKLIST</span>
+                        <h3 class="font-display text-2xl font-bold uppercase text-espresso">list of ppl I want a pic with:</h3>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 font-mono text-xs max-h-80 overflow-y-auto pr-1">
+                        ${state.diary.checklist.map((item, i) => `
+                            <label class="flex items-center gap-2 bg-vanilla p-2 rounded-lg border border-espresso/40 cursor-pointer">
+                                <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem(${i})" class="w-4 h-4 accent-terracotta">
+                                <span class="${item.done ? 'line-through opacity-50' : 'font-bold'}">${item.name}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                // Final Creator Bio Page
+                pageCard.innerHTML = `
+                    <div class="space-y-4 text-espresso font-mono">
+                        <div class="flex items-center justify-between border-b-2 border-espresso/20 pb-2">
+                            <span class="font-bold text-terracotta text-sm">CREATOR NOTE</span>
+                            <span class="bg-butter px-2 py-0.5 rounded border border-espresso font-bold text-xs">THE END</span>
+                        </div>
+
+                        <div class="font-hand text-2xl leading-relaxed space-y-2 bg-vanilla p-6 rounded-2xl border-2 border-espresso">
+                            <p>Yo! I'm Ray (Rayaan)!..</p>
+                            <p class="text-terracotta">ummm</p>
+                            <p>made this because my friends live inconveniently far away.</p>
+                            <p>blame me for everything else.</p>
+                            <p class="text-sm font-sans text-espresso/80">if you have complaints, please keep them to yourself. (jk!! Reach me!!, i don't bite. usually.)</p>
+                            <p>if you have memes, send them.</p>
+                            <a href="https://instagram.com" target="_blank" class="inline-block mt-2 font-mono text-lg font-bold text-terracotta hover:underline">
+                                ↗ @the_rayaan_k
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+
+            wrapper.appendChild(pageCard);
+        }
+
+        function addDiaryPage() {
+            state.diary.pages.push({
+                id: Date.now(),
+                title: `New Entry #${state.diary.pages.length + 1}`,
+                text: 'Write your memories here...',
+                font: 'font-hand',
+                attachedPhoto: null
+            });
+            state.diary.currentPage = state.diary.pages.length - 1;
+            renderDiaryBook();
+            showToast('New diary page created!');
+        }
+
+        function nextDiaryPage() {
+            const total = state.diary.pages.length + 2;
+            if (state.diary.currentPage < total - 1) {
+                state.diary.currentPage++;
+                renderDiaryBook();
+            }
+        }
+
+        function prevDiaryPage() {
+            if (state.diary.currentPage > 0) {
+                state.diary.currentPage--;
+                renderDiaryBook();
+            }
+        }
+
+        function updatePageTitle(idx, val) { state.diary.pages[idx].title = val; }
+        function updatePageText(idx, val) { state.diary.pages[idx].text = val; }
+        function updatePageFont(idx, val) { state.diary.pages[idx].font = val; renderDiaryBook(); }
+
+        function attachPhotoToCurrentPage(idx) {
+            if (state.capturedPoses.length > 0) {
+                state.diary.pages[idx].attachedPhoto = state.capturedPoses[0];
+                renderDiaryBook();
+                showToast('Attached photobooth strip to diary page!');
+            } else {
+                showToast('Take a photo in the studio first!');
+            }
+        }
+        function removeAttachedPhoto(idx) {
+            state.diary.pages[idx].attachedPhoto = null;
+            renderDiaryBook();
+        }
+
+        function stickPhotoToDiary() {
+            showView('diary');
+            attachPhotoToCurrentPage(0);
+        }
+
+        function toggleChecklistItem(i) {
+            state.diary.checklist[i].done = !state.diary.checklist[i].done;
+            renderDiaryBook();
+        }
+
+        // AUDIO SOUND SYNTHESIZER
+        function playBeepSound(freq) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch(e) {}
+        }
+
+        function playSnapSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'triangle';
+                osc.frequency.value = 1200;
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch(e) {}
+        }
+
+        // TOAST SYSTEM
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 z-50 bg-espresso text-cream font-mono text-xs px-4 py-3 rounded-2xl border-2 border-butter shadow-2xl flex items-center gap-2 animate-bounce';
+            toast.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-butter"></i> <span>${msg}</span>`;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
