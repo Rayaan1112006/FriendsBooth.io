@@ -39,7 +39,6 @@
     </script>
 
     <!-- MediaPipe Selfie Segmentation CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
 
     <!-- Lucide Icons -->
@@ -92,19 +91,6 @@
             box-shadow: 5px 5px 0px #51463D;
         }
 
-        /* 3D Book Page Flip Styles */
-        .book-container {
-            perspective: 1500px;
-        }
-        .book-page {
-            transform-origin: left center;
-            transition: transform 0.6s cubic-bezier(0.645, 0.045, 0.355, 1);
-            transform-style: preserve-3d;
-        }
-        .book-page.flipped {
-            transform: rotateY(-180deg);
-        }
-
         /* Screen Flash */
         @keyframes flash-white {
             0% { opacity: 0; }
@@ -120,31 +106,34 @@
         .filter-disposable { filter: contrast(1.2) saturate(1.25) sepia(0.15); }
         .filter-bw { filter: grayscale(1) contrast(1.2); }
         .filter-anime { filter: contrast(1.1) saturate(1.4) brightness(1.05); }
-        .filter-spidey { filter: contrast(1.3) saturate(1.5) hue-rotate(-10deg); }
+        .filter-none { filter: none; }
 
         /* Wiggle animations */
         @keyframes wiggle {
-            0%, 100% { transform: rotate(-3deg); }
-            50% { transform: rotate(3deg); }
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
         }
-        .animate-wiggle { animation: wiggle 3s ease-in-out infinite; }
+        .animate-wiggle { animation: wiggle 3.5s ease-in-out infinite; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between selection:bg-terracotta selection:text-white relative pb-16">
+<body class="min-h-screen flex flex-col justify-between selection:bg-terracotta selection:text-white relative">
 
     <!-- Screen Flash Element -->
     <div id="flash-element" class="fixed inset-0 bg-white pointer-events-none z-50 opacity-0"></div>
 
+    <!-- Hidden Live Video Source Element -->
+    <video id="webcam-video" autoplay playsinline muted class="fixed -top-[9999px] -left-[9999px] w-1 h-1 opacity-0 pointer-events-none"></video>
+
     <!-- MAIN NAVBAR -->
     <nav class="sticky top-0 z-40 border-b-2 border-espresso bg-vanilla/95 backdrop-blur-md px-4 md:px-8 py-3">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
             
             <!-- Brand Logo & Subtitle -->
             <div class="flex flex-col cursor-pointer" onclick="showView('landing')">
                 <div class="flex items-center gap-2">
                     <span class="font-display font-bold text-2xl md:text-3xl tracking-tight text-espresso">FriendsBooth.io</span>
-                    <span class="inline-block px-2.5 py-0.5 text-xs font-mono bg-butter text-espresso border border-espresso rounded-full font-bold shadow-[1px_1px_0px_#51463D]">
-                        v2.0 PRO
+                    <span class="hidden sm:inline-block px-2.5 py-0.5 text-xs font-mono bg-butter text-espresso border border-espresso rounded-full font-bold shadow-[1px_1px_0px_#51463D]">
+                        PHOTO CLUB
                     </span>
                 </div>
                 <span class="font-hand text-base font-bold text-terracotta tracking-wide -mt-1 leading-none">
@@ -152,707 +141,457 @@
                 </span>
             </div>
 
-            <!-- Nav Items -->
-            <div class="flex items-center gap-2 sm:gap-4">
-                <button onclick="showView('avatar')" class="paper-button-secondary text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold">
-                    <i data-lucide="user" class="w-4 h-4 text-terracotta"></i>
-                    <span class="hidden sm:inline">AVATAR CREATOR</span>
+            <!-- Navigation Links -->
+            <div class="flex items-center gap-2 sm:gap-4 font-mono text-xs">
+                <button onclick="scrollToHowItWorks()" class="hidden md:inline-block hover:text-terracotta font-bold px-2 py-1">
+                    HOW IT WORKS
                 </button>
-                <button onclick="showView('diary')" class="paper-button-secondary text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 font-bold">
-                    <i data-lucide="book-open" class="w-4 h-4 text-sage"></i>
-                    <span class="hidden sm:inline">SCRAPBOOK DIARY</span>
+                <button onclick="showView('diary')" class="paper-button-secondary px-3 py-2 rounded-xl font-bold flex items-center gap-1.5">
+                    <i data-lucide="book-open" class="w-4 h-4 text-terracotta"></i>
+                    <span>DIARY</span>
                 </button>
-                <button onclick="openCreateModal()" class="paper-button text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-2">
-                    <i data-lucide="camera" class="w-4 h-4"></i>
-                    <span>CREATE BOOTH</span>
+                <button onclick="openCreateModal()" class="paper-button px-4 py-2 rounded-xl font-bold">
+                    CREATE A BOOTH
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- VIEW CONTAINER -->
-    <main id="app-viewport" class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-8">
+    <!-- MAIN VIEWPORT -->
+    <main class="flex-1 w-full">
 
-        <!-- VIEW 1: LANDING PAGE -->
-        <section id="view-landing" class="space-y-12">
+        <!-- ========================================== -->
+        <!-- 1. LANDING PAGE VIEW                       -->
+        <!-- ========================================== -->
+        <section id="view-landing" class="max-w-7xl mx-auto px-4 md:px-8 py-10 md:py-16 space-y-20">
             
-            <!-- Hero Banner -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center pt-4 md:pt-6">
+            <!-- Hero Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
                 
+                <!-- Left Editorial Copy -->
                 <div class="lg:col-span-7 space-y-6 relative">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-sage/30 border border-espresso rounded-full">
-                        <span class="w-2 h-2 rounded-full bg-sage animate-ping"></span>
-                        <span class="font-mono text-xs uppercase tracking-widest font-bold">Synchronized Long-Distance Photo Studio</span>
+                    <div class="inline-flex items-center gap-2 bg-cream border-2 border-espresso px-3 py-1.5 rounded-full font-mono text-xs font-bold shadow-[2px_2px_0px_#51463D]">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sage animate-pulse"></span>
+                        <span>THE INTERNET FRIENDS PHOTO CLUB • LIVE SYNC</span>
                     </div>
 
-                    <h1 class="font-display text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-espresso leading-[0.95] uppercase">
+                    <h1 class="font-display font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[0.95] tracking-tight text-espresso uppercase">
                         YOU LIVE THERE.<br>
                         I LIVE HERE.<br>
-                        <span class="text-terracotta underline decoration-butter decoration-wavy underline-offset-8">LET'S BE IN THIS.</span>
+                        <span class="text-terracotta">LET'S BE IN THIS.</span>
                     </h1>
 
-                    <p class="text-base sm:text-lg text-espresso/90 max-w-xl font-medium leading-relaxed">
-                        "Distance is stupid. Let's take a picture." A synchronized virtual photo booth designed for long-distance friends, featuring live background removal, special Anime & Spider-Man strips, interactive avatar companions, and a scrapbook diary!
+                    <p class="text-lg md:text-xl text-espresso/85 max-w-xl leading-relaxed">
+                        A virtual synchronized photo booth for the people you know through a screen, but wish you could hug in real life. <strong>Distance is stupid. Let's take a picture.</strong>
                     </p>
 
-                    <!-- CTAs -->
                     <div class="flex flex-wrap items-center gap-4 pt-2">
-                        <button onclick="openCreateModal()" class="paper-button text-base px-6 py-3.5 rounded-xl flex items-center gap-3 text-lg font-bold">
-                            <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <button onclick="openCreateModal()" class="paper-button px-7 py-4 rounded-2xl text-base md:text-lg flex items-center gap-2">
+                            <i data-lucide="camera" class="w-5 h-5"></i>
                             <span>CREATE A BOOTH</span>
                         </button>
-                        <button onclick="openJoinModal()" class="paper-button-secondary text-base px-6 py-3.5 rounded-xl font-bold">
-                            JOIN BOOTH CODE
-                        </button>
-                        <button onclick="showView('avatar')" class="paper-button-secondary text-base px-5 py-3.5 rounded-xl font-bold bg-butter/60">
-                            🎨 CREATE AVATAR
+                        <button onclick="openJoinModal()" class="paper-button-secondary px-7 py-4 rounded-2xl text-base md:text-lg flex items-center gap-2">
+                            <i data-lucide="users" class="w-5 h-5"></i>
+                            <span>JOIN YOUR FRIENDS</span>
                         </button>
                     </div>
 
-                    <div class="pt-2 flex items-center gap-3">
-                        <span class="font-hand text-2xl font-bold text-terracotta">"east or west Abrish is the best"</span>
-                        <span class="font-mono text-xs text-espresso/60">• Ray's Friends Club</span>
+                    <!-- Handwritten Margin Notes -->
+                    <div class="pt-4 flex flex-wrap gap-6 font-hand text-xl text-espresso/75">
+                        <span class="-rotate-2 inline-block">✎ "3 continents. 4 idiots. 1 photo."</span>
+                        <span class="rotate-1 inline-block text-terracotta">★ "Smile like the Wi-Fi isn't struggling."</span>
                     </div>
                 </div>
 
-                <!-- Hero Interactive Cards Preview -->
-                <div class="lg:col-span-5 relative">
-                    <div class="paper-card p-5 rounded-2xl bg-cream space-y-4 shadow-xl transform rotate-1 hover:rotate-0 transition-transform">
-                        <div class="flex items-center justify-between border-b border-espresso/20 pb-2 font-mono text-xs">
-                            <span class="font-bold">BOOTH #ANIME-SPIDEY</span>
-                            <span class="bg-butter px-2 py-0.5 rounded border border-espresso font-bold">SPECIAL EDITION</span>
-                        </div>
+                <!-- Right Hero Analog Strip Collage -->
+                <div class="lg:col-span-5 relative flex justify-center">
+                    <!-- Floating Doodle Badge -->
+                    <div class="absolute -top-5 -left-2 md:left-4 z-20 bg-butter border-2 border-espresso px-3 py-1 rounded-xl font-hand text-lg font-bold shadow-[3px_3px_0px_#51463D] -rotate-6 animate-wiggle">
+                        POSE, IDIOT!
+                    </div>
 
-                        <!-- 4-Strip Preview Mock -->
-                        <div class="grid grid-cols-2 gap-2 bg-espresso p-2 rounded-xl">
-                            <div class="aspect-square bg-sand rounded-lg border border-white flex items-center justify-center relative overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter-anime">
-                                <span class="absolute bottom-1 right-1 font-mono text-[9px] bg-red-600 text-white px-1 rounded font-bold">THWIP!</span>
+                    <div class="paper-card p-5 rounded-3xl bg-cream max-w-sm w-full rotate-2 hover:rotate-0 transition-transform duration-300">
+                        <div class="flex items-center justify-between border-b-2 border-espresso pb-2 mb-3 font-mono text-xs font-bold">
+                            <span>BOOTH #ABRISH01</span>
+                            <span class="text-sage">● SYNCED</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="bg-dustyblue/40 border-2 border-espresso rounded-xl p-4 flex items-center justify-between">
+                                <div>
+                                    <p class="font-mono text-[10px] uppercase font-bold">TOKYO • 02:14 AM</p>
+                                    <p class="font-display font-bold text-lg">Abrish</p>
+                                </div>
+                                <span class="font-hand text-xl bg-butter px-2 py-0.5 rounded border border-espresso">✌️ peace</span>
                             </div>
-                            <div class="aspect-square bg-sand rounded-lg border border-white flex items-center justify-center relative overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80" class="w-full h-full object-cover filter-spidey">
-                                <span class="absolute top-1 left-1 font-mono text-[9px] bg-yellow-400 text-black px-1 rounded font-bold">ゴゴゴ</span>
+                            <div class="bg-terracotta/25 border-2 border-espresso rounded-xl p-4 flex items-center justify-between">
+                                <div>
+                                    <p class="font-mono text-[10px] uppercase font-bold">LONDON • 06:14 PM</p>
+                                    <p class="font-display font-bold text-lg">Ray</p>
+                                </div>
+                                <span class="font-hand text-xl bg-cream px-2 py-0.5 rounded border border-espresso">someone blinked.</span>
                             </div>
                         </div>
-
-                        <div class="flex items-center justify-between font-mono text-xs pt-1">
-                            <span>4-Shot Strip Synced</span>
-                            <span class="font-hand text-lg text-terracotta font-bold">"someone blinked."</span>
+                        <div class="mt-4 pt-3 border-t-2 border-espresso/20 flex items-center justify-between font-hand text-lg font-bold text-terracotta">
+                            <span>"this is going in the archives."</span>
+                            <span class="font-mono text-xs text-espresso">1/4 STRIP</span>
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <!-- Features Showcase Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-                <div onclick="showView('avatar')" class="paper-card p-6 rounded-2xl space-y-3 bg-cream cursor-pointer hover:-translate-y-1 transition-transform">
-                    <div class="w-10 h-10 rounded-xl bg-butter flex items-center justify-center border border-espresso font-bold text-xl">👤</div>
-                    <h3 class="font-display text-xl font-bold uppercase text-espresso">Interactive Avatar Companion</h3>
-                    <p class="text-xs text-espresso/80">Mix 10 types of hair, eyes, nose, ears, mouth, facial hair, glasses, shirts, pants & shoes! Watch your avatar walk around your screen!</p>
+            <!-- How It Works Section -->
+            <div id="how-it-works-section" class="border-t-2 border-espresso/20 pt-14 space-y-8">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <div>
+                        <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">ANALOG WARMTH + DIGITAL SYNC</span>
+                        <h2 class="font-display text-3xl md:text-4xl font-bold uppercase text-espresso">How the booth works</h2>
+                    </div>
+                    <p class="font-hand text-2xl text-espresso/80">"distance is a scam."</p>
                 </div>
 
-                <div onclick="openCreateModal()" class="paper-card p-6 rounded-2xl space-y-3 bg-cream cursor-pointer hover:-translate-y-1 transition-transform">
-                    <div class="w-10 h-10 rounded-xl bg-terracotta text-white flex items-center justify-center border border-espresso font-bold text-xl">📸</div>
-                    <h3 class="font-display text-xl font-bold uppercase text-espresso">Multi-Shot & Anime/Spidey Strips</h3>
-                    <p class="text-xs text-espresso/80">Take single shots, 4-photo classic strips, or 6-photo booth strips! Position and scale yourself live on stage before snapping.</p>
-                </div>
-
-                <div onclick="showView('diary')" class="paper-card p-6 rounded-2xl space-y-3 bg-cream cursor-pointer hover:-translate-y-1 transition-transform">
-                    <div class="w-10 h-10 rounded-xl bg-sage flex items-center justify-center border border-espresso font-bold text-xl">📖</div>
-                    <h3 class="font-display text-xl font-bold uppercase text-espresso">3D Scrapbook Diary</h3>
-                    <p class="text-xs text-espresso/80">Interactive 3D page flips! Stick your captured photobooth pictures, add pages, edit text, check Ray's friend checklist & bio!</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="paper-card p-6 rounded-2xl bg-cream space-y-3">
+                        <span class="inline-block font-mono text-xs font-bold bg-butter px-2.5 py-1 rounded border border-espresso">STEP 01</span>
+                        <h3 class="font-display font-bold text-xl">Open a Studio Room</h3>
+                        <p class="text-sm text-espresso/80">Create a booth, share your room code, and step onto the virtual studio stage with live camera preview.</p>
+                    </div>
+                    <div class="paper-card p-6 rounded-2xl bg-cream space-y-3">
+                        <span class="inline-block font-mono text-xs font-bold bg-sage/60 px-2.5 py-1 rounded border border-espresso">STEP 02</span>
+                        <h3 class="font-display font-bold text-xl">Position & Pick a Scene</h3>
+                        <p class="text-sm text-espresso/80">Drag yourself anywhere in the frame, toggle background removal, and choose Anime, Spider-Man, or Vintage Café.</p>
+                    </div>
+                    <div class="paper-card p-6 rounded-2xl bg-cream space-y-3">
+                        <span class="inline-block font-mono text-xs font-bold bg-terracotta/40 px-2.5 py-1 rounded border border-espresso">STEP 03</span>
+                        <h3 class="font-display font-bold text-xl">Develop & Keep Forever</h3>
+                        <p class="text-sm text-espresso/80">Snap 1, 4, or 6 synchronized poses, watch them develop in the darkroom, and download or stick them in your diary.</p>
+                    </div>
                 </div>
             </div>
-
         </section>
 
-        <!-- VIEW 2: LIVE PHOTO STUDIO ROOM -->
-        <section id="view-room" class="hidden space-y-6">
+        <!-- ========================================== -->
+        <!-- 2. LIVE STUDIO BOOTH VIEW                  -->
+        <!-- ========================================== -->
+        <section id="view-room" class="hidden max-w-7xl mx-auto px-4 md:px-8 py-6 space-y-6">
             
-            <!-- Room Header Bar -->
-            <div class="paper-card p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+            <!-- Room Top Bar -->
+            <div class="paper-card p-4 rounded-2xl bg-cream flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-3 h-3 rounded-full bg-sage animate-pulse"></div>
+                    <span class="w-3 h-3 rounded-full bg-sage animate-pulse"></span>
                     <div>
-                        <h2 id="room-header-title" class="font-display text-xl font-bold text-espresso uppercase">ROOM: FRIENDS-CLUB</h2>
-                        <div class="flex items-center gap-2 font-mono text-xs text-espresso/70">
-                            <span>CODE: <strong id="room-header-code" class="text-espresso">ABCD12</strong></span>
-                            <button onclick="copyRoomLink()" class="hover:text-terracotta underline flex items-center gap-1 font-bold">
-                                <i data-lucide="copy" class="w-3 h-3"></i> Copy Invite Link
-                            </button>
-                        </div>
+                        <h2 id="room-header-title" class="font-display font-bold text-lg md:text-xl uppercase">ROOM: FRIENDS CLUB</h2>
+                        <p class="font-mono text-xs text-espresso/75">CODE: <strong id="room-header-code" class="text-terracotta">RAY123</strong> • <span id="cam-status-label">INITIALIZING CAMERA...</span></p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-3 font-mono text-xs">
-                    <button id="ready-btn" onclick="toggleReadyState()" class="paper-button-secondary text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5">
-                        <i data-lucide="check-circle" class="w-4 h-4"></i>
-                        <span id="ready-btn-text">I'M READY</span>
+                <div class="flex flex-wrap items-center gap-2 font-mono text-xs">
+                    <button onclick="retryCameraAccess()" class="paper-button-secondary px-3 py-2 rounded-xl flex items-center gap-1.5">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>Enable Camera</span>
                     </button>
-                    <button onclick="leaveRoom()" class="px-3.5 py-2 bg-red-100 hover:bg-red-200 text-red-800 border-2 border-red-400 rounded-xl font-bold transition">
-                        LEAVE
+                    <button onclick="copyRoomLink()" class="paper-button-secondary px-3 py-2 rounded-xl flex items-center gap-1.5">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                        <span>Invite Link</span>
+                    </button>
+                    <button onclick="leaveRoom()" class="bg-sand hover:bg-terracotta hover:text-white border-2 border-espresso px-3 py-2 rounded-xl font-bold transition-colors">
+                        Leave
                     </button>
                 </div>
             </div>
 
-            <!-- Studio Workspace Grid -->
+            <!-- Main Studio Workspace -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                <!-- Stage View (Left) -->
+                <!-- Left/Center Live Camera Canvas Stage -->
                 <div class="lg:col-span-8 space-y-4">
-                    
-                    <div class="relative paper-card p-3 rounded-2xl bg-espresso overflow-hidden min-h-[420px] flex flex-col justify-center">
+                    <div class="paper-card p-3 sm:p-4 rounded-3xl bg-espresso relative overflow-hidden flex flex-col items-center justify-center">
                         
-                        <!-- Selected Scene Overlay -->
-                        <div id="scene-bg-overlay" class="absolute inset-0 bg-cover bg-center transition-all duration-500 opacity-90" style="background-image: url('https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80');"></div>
-                        
-                        <!-- Special Edition SVG Overlays (Anime / Spider-Man) -->
-                        <div id="anime-overlay" class="absolute inset-0 pointer-events-none hidden bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
-                        <div id="spidey-overlay" class="absolute inset-0 pointer-events-none hidden border-8 border-red-600">
-                            <div class="absolute top-2 left-2 bg-yellow-400 text-black font-display font-extrabold px-3 py-1 border-2 border-black -rotate-3 text-sm">THWIP!</div>
-                            <div class="absolute bottom-2 right-2 bg-blue-600 text-white font-display font-extrabold px-3 py-1 border-2 border-black rotate-3 text-sm">FRIENDSBOOTH!</div>
-                        </div>
+                        <!-- Live Interactive Canvas -->
+                        <canvas id="live-stage-canvas" width="640" height="440" class="w-full max-w-[640px] h-auto rounded-2xl border-2 border-cream shadow-xl cursor-move filter-warm bg-sand"></canvas>
 
-                        <!-- Live Stage Display Canvas -->
-                        <div class="relative z-10 w-full h-full flex items-center justify-center min-h-[380px]" id="stage-container">
-                            <canvas id="live-stage-canvas" width="800" height="500" class="max-w-full h-auto rounded-xl border-2 border-white shadow-2xl cursor-move"></canvas>
-                        </div>
-
-                        <!-- Floating Canvas Watermark -->
-                        <div class="absolute bottom-3 right-4 z-20 font-mono text-[10px] text-cream bg-espresso/80 px-2 py-0.5 rounded border border-white/20">
-                            FriendsBooth.io • Synchronized Live Stage
+                        <!-- Helper Tip Pill -->
+                        <div class="mt-3 flex flex-wrap items-center justify-between w-full max-w-[640px] text-cream font-mono text-xs px-1 gap-2">
+                            <span>✋ Drag yourself directly on the frame to reposition</span>
+                            <span id="sync-clock-badge" class="text-butter">● LIVE CAPTURE READY</span>
                         </div>
                     </div>
 
-                    <!-- Multi-Shot Thumbnail Sequence Bar -->
-                    <div id="multi-shot-tray" class="hidden paper-card p-3 rounded-xl bg-sand/60 space-y-2">
-                        <span class="font-mono text-xs font-bold text-espresso block">MULTI-SHOT CAPTURED POSES:</span>
-                        <div id="thumbnails-container" class="flex gap-2 overflow-x-auto pb-1">
-                            <!-- Snapped poses will appear here -->
-                        </div>
+                    <!-- Multi-Shot Thumbnail Strip Preview -->
+                    <div id="multi-shot-tray" class="hidden paper-card p-3 rounded-2xl bg-cream space-y-2">
+                        <span class="font-mono text-xs font-bold uppercase text-terracotta">CAPTURED SEQUENCE POSES:</span>
+                        <div id="thumbnails-container" class="flex flex-wrap gap-3"></div>
                     </div>
 
-                    <!-- Stage Positioning & Scale Controls -->
-                    <div class="paper-card p-3.5 rounded-xl bg-cream flex flex-wrap items-center justify-between gap-4 font-mono text-xs">
-                        <div class="flex items-center gap-4">
-                            <span class="font-bold text-espresso flex items-center gap-1">
-                                <i data-lucide="move" class="w-4 h-4"></i> Position & Scale:
-                            </span>
-                            <label class="flex items-center gap-1">
-                                <span>X:</span>
-                                <input type="range" id="pos-x-range" min="-200" max="200" value="0" oninput="updateStagePosition()" class="w-20">
-                            </label>
-                            <label class="flex items-center gap-1">
-                                <span>Y:</span>
-                                <input type="range" id="pos-y-range" min="-150" max="150" value="0" oninput="updateStagePosition()" class="w-20">
-                            </label>
-                            <label class="flex items-center gap-1">
-                                <span>Scale:</span>
-                                <input type="range" id="scale-range" min="0.5" max="2" step="0.1" value="1" oninput="updateStagePosition()" class="w-20">
-                            </label>
+                    <!-- Primary Capture Action Bar -->
+                    <div class="paper-card p-4 rounded-2xl bg-cream flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="toggleCamera()" id="toggle-cam-btn" class="paper-button-secondary px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
+                                <i data-lucide="video" class="w-4 h-4"></i>
+                                <span>Cam On</span>
+                            </button>
+                            <button onclick="toggleReadyState()" class="paper-button-secondary px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
+                                <i data-lucide="check-circle" class="w-4 h-4 text-sage"></i>
+                                <span id="ready-btn-text">I'M READY</span>
+                            </button>
+                            <button onclick="toggleVirtualFriend()" class="paper-button-secondary px-3.5 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                                <span id="friend-sim-label">+ Add Friend</span>
+                            </button>
                         </div>
-                        <button onclick="resetStagePosition()" class="hover:underline text-terracotta font-bold">Reset Pos</button>
-                    </div>
 
+                        <button onclick="startPhotoCaptureSequence()" id="main-capture-btn" class="paper-button px-6 py-3.5 rounded-2xl text-base flex items-center gap-2">
+                            <i data-lucide="aperture" class="w-5 h-5"></i>
+                            <span id="capture-btn-label">TAKE PHOTO</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Right Studio Control Dock -->
-                <div class="lg:col-span-4 space-y-4">
+                <!-- Right Controls Sidebar -->
+                <div class="lg:col-span-4 space-y-4 font-mono text-xs">
                     
-                    <div class="paper-card p-5 rounded-2xl space-y-4">
-                        <h3 class="font-display text-lg font-bold uppercase text-espresso border-b border-espresso/20 pb-2 flex items-center justify-between">
-                            <span>Studio Controls</span>
-                            <i data-lucide="sliders" class="w-4 h-4"></i>
-                        </h3>
+                    <!-- Position & Scale Controls -->
+                    <div class="paper-card p-4 rounded-2xl bg-cream space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold uppercase text-espresso">1. Frame Position & Size</span>
+                            <button onclick="resetStagePosition()" class="text-terracotta underline font-bold">Reset</button>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex items-center justify-between">
+                                <span>Horizontal (X)</span>
+                                <input type="range" id="pos-x-range" min="-220" max="220" value="0" oninput="updateStagePosition()" class="w-36 accent-terracotta">
+                            </label>
+                            <label class="flex items-center justify-between">
+                                <span>Vertical (Y)</span>
+                                <input type="range" id="pos-y-range" min="-160" max="160" value="0" oninput="updateStagePosition()" class="w-36 accent-terracotta">
+                            </label>
+                            <label class="flex items-center justify-between">
+                                <span>Zoom / Scale</span>
+                                <input type="range" id="scale-range" min="0.5" max="1.6" step="0.05" value="1" oninput="updateStagePosition()" class="w-36 accent-terracotta">
+                            </label>
+                        </div>
+                    </div>
 
-                        <!-- Trigger Capture Button -->
-                        <div class="space-y-2 bg-sand/40 p-3 rounded-xl border border-espresso/30">
-                            <label class="font-mono text-xs font-bold text-espresso block">PHOTO MODE SEQUENCE</label>
-                            <select id="select-mode" onchange="changeCaptureMode(this.value)" class="w-full bg-cream border border-espresso rounded-lg p-2 font-mono text-xs font-bold">
-                                <option value="1">SINGLE GROUP SHOT (1 Photo)</option>
-                                <option value="4">CLASSIC PHOTO STRIP (4 Sequential Shots)</option>
-                                <option value="6">BOOTH STRIP (6 Sequential Shots)</option>
-                            </select>
-
-                            <button id="trigger-capture-btn" onclick="startPhotoCaptureSequence()" class="paper-button w-full py-3 rounded-xl font-bold text-lg flex items-center justify-center gap-2 mt-2">
-                                <i data-lucide="camera" class="w-5 h-5"></i>
-                                <span id="capture-btn-label">TAKE PHOTO</span>
+                    <!-- Background Removal & Shared Scene -->
+                    <div class="paper-card p-4 rounded-2xl bg-cream space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold uppercase text-espresso">2. Background Removal</span>
+                            <button id="bg-toggle-btn" onclick="toggleBackgroundRemoval()" class="font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso bg-sand text-espresso/75">
+                                OFF (FULL CAM)
                             </button>
                         </div>
+                        <p class="text-[11px] text-espresso/70 leading-snug">
+                            Turn ON to cut out your room background and place yourself inside a shared scene.
+                        </p>
 
-                        <!-- Special Edition & Scene Selector -->
-                        <div class="space-y-2">
-                            <label class="font-mono text-xs font-bold text-espresso block">SPECIAL TEMPLATE & SCENE</label>
-                            <select id="select-scene" onchange="changeScene(this.value)" class="w-full bg-cream border border-espresso rounded-lg p-2 font-mono text-xs font-bold">
-                                <optgroup label="🌟 Special Editions">
-                                    <option value="anime">⚡ Anime Screentone & Katakana SFX</option>
-                                    <option value="spidey">🕷️ Spider-Man Comic Edition</option>
-                                </optgroup>
-                                <optgroup label="🏞️ Shared Scenes">
-                                    <option value="cafe">Vintage Café Studio</option>
-                                    <option value="space">Outer Space Constellations</option>
-                                    <option value="beach">Sunset Beach Paradise</option>
-                                    <option value="arcade">Japanese Neon Arcade</option>
-                                    <option value="greenhouse">Botanical Greenhouse</option>
-                                </optgroup>
+                        <div class="pt-1">
+                            <label class="font-bold block mb-1 uppercase">3. Scene / Special Edition</label>
+                            <select id="select-scene" onchange="changeScene(this.value)" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold">
+                                <option value="studio">Warm Analog Studio</option>
+                                <option value="anime">⚡ Anime Special Edition</option>
+                                <option value="spidey">🕷️ Spider-Man Comic Edition</option>
+                                <option value="cafe">Vintage Parisian Café</option>
+                                <option value="space">Outer Space Stars</option>
+                                <option value="beach">Sunset Beach Vacation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Photo Strip Mode & Filter -->
+                    <div class="paper-card p-4 rounded-2xl bg-cream space-y-3">
+                        <div>
+                            <label class="font-bold block mb-1 uppercase">4. Photo Strip Mode</label>
+                            <select id="select-capture-mode" onchange="changeCaptureMode(this.value)" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold">
+                                <option value="1">Single Group Frame (1 Shot)</option>
+                                <option value="4">Classic Photo Strip (4 Shots)</option>
+                                <option value="6">Extended Booth Strip (6 Shots)</option>
                             </select>
                         </div>
 
-                        <!-- Background Removal Toggle -->
-                        <div class="flex items-center justify-between bg-cream p-3 rounded-xl border border-espresso/20">
-                            <span class="font-mono text-xs font-bold text-espresso">REMOVE BACKGROUND</span>
-                            <button id="bg-toggle-btn" onclick="toggleBackgroundRemoval()" class="font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso bg-sage text-espresso">
-                                ON
-                            </button>
-                        </div>
-
-                        <!-- Filters -->
-                        <div class="space-y-2">
-                            <label class="font-mono text-xs font-bold text-espresso block">ANALOG FILTER</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <button onclick="setFilter('filter-warm')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">Warm Film</button>
-                                <button onclick="setFilter('filter-disposable')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">Disposable</button>
-                                <button onclick="setFilter('filter-bw')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">B&W Silver</button>
-                                <button onclick="setFilter('filter-anime')" class="filter-btn paper-button-secondary text-[11px] py-1 rounded font-mono">Anime Vibrant</button>
+                        <div>
+                            <label class="font-bold block mb-1 uppercase">5. Film Filter</label>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <button onclick="setFilter('filter-warm')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">Warm Film</button>
+                                <button onclick="setFilter('filter-disposable')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">Disposable</button>
+                                <button onclick="setFilter('filter-bw')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">B&W Noir</button>
+                                <button onclick="setFilter('filter-none')" class="bg-vanilla hover:bg-butter border border-espresso py-1.5 px-2 rounded-lg font-bold">Natural</button>
                             </div>
                         </div>
-
-                        <!-- Media Device Toggles -->
-                        <div class="pt-2 border-t border-espresso/20 flex items-center justify-between font-mono text-xs">
-                            <button id="toggle-cam-btn" onclick="toggleCamera()" class="flex items-center gap-1 text-espresso hover:text-terracotta font-bold">
-                                <i data-lucide="video" class="w-4 h-4"></i> <span>Cam On</span>
-                            </button>
-                            <button onclick="toggleVirtualSim()" class="flex items-center gap-1 text-terracotta hover:underline font-bold">
-                                🤖 Add Friend Sim
-                            </button>
-                        </div>
-
                     </div>
 
                 </div>
-
             </div>
-
         </section>
 
-        <!-- VIEW 3: COUNTDOWN OVERLAY -->
-        <div id="countdown-modal" class="fixed inset-0 z-50 bg-espresso/85 backdrop-blur-md flex flex-col items-center justify-center text-cream hidden">
-            <div class="text-center space-y-4">
-                <span id="countdown-subtext" class="font-mono text-base tracking-widest text-butter uppercase font-bold">SYNCHRONIZED CAPTURE IN</span>
-                <div id="countdown-number" class="font-display text-9xl md:text-[14rem] font-extrabold text-butter tracking-tighter">
-                    3
-                </div>
-                <div class="font-hand text-3xl md:text-4xl text-cream font-bold animate-bounce">
-                    "Smile like the Wi-Fi isn't struggling!"
-                </div>
-            </div>
-        </div>
+        <!-- ========================================== -->
+        <!-- 3. DARKROOM DEVELOPING SEQUENCE VIEW       -->
+        <!-- ========================================== -->
+        <section id="view-developing" class="hidden max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
+            <div class="paper-card p-8 rounded-3xl bg-cream space-y-6">
+                <span class="inline-block font-mono text-xs font-bold bg-butter px-3 py-1 rounded-full border border-espresso animate-pulse">
+                    DARKROOM PROCESSING
+                </span>
+                <h2 class="font-display text-3xl font-bold uppercase text-espresso">Developing your strip...</h2>
 
-        <!-- VIEW 4: PHOTO DEVELOPING DARKROOM VIEW -->
-        <section id="view-developing" class="hidden min-h-[50vh] flex flex-col items-center justify-center space-y-6">
-            <div class="paper-card p-8 rounded-3xl max-w-lg w-full text-center space-y-6 bg-cream">
-                <div class="space-y-1">
-                    <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">DARKROOM PROCESSING</span>
-                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Developing Your Strip...</h2>
+                <div class="max-w-sm mx-auto p-3 bg-vanilla border-2 border-espresso rounded-2xl shadow-inner">
+                    <img id="developing-img-preview" src="" alt="Developing preview" class="w-full h-56 object-cover rounded-xl blur-md opacity-40 transition-all duration-1000">
                 </div>
 
-                <div class="relative w-64 h-80 mx-auto bg-sand border-4 border-white shadow-xl rounded-lg overflow-hidden flex items-center justify-center p-2">
-                    <img id="developing-img-preview" class="w-full h-full object-cover transition-all duration-2000 filter blur-md opacity-40" src="" alt="Developing">
-                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-espresso/40 text-white font-mono text-xs gap-2">
-                        <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-butter"></i>
-                        <span id="developing-status-text" class="font-hand text-xl font-bold text-butter">"Developing questionable decisions..."</span>
-                    </div>
-                </div>
+                <p id="developing-status-text" class="font-hand text-2xl font-bold text-terracotta">
+                    "Developing questionable decisions..."
+                </p>
 
-                <button onclick="finishDevelopingImmediately()" class="paper-button-secondary text-xs px-4 py-2 rounded-xl font-bold">
-                    SKIP ANIMATION
+                <button onclick="finishDevelopingImmediately()" class="paper-button-secondary px-5 py-2 rounded-xl font-mono text-xs">
+                    Skip Animation →
                 </button>
             </div>
         </section>
 
-        <!-- VIEW 5: FINAL COMPOSITE RESULT & DOWNLOAD MODAL -->
-        <section id="view-result" class="hidden space-y-8 max-w-4xl mx-auto">
-            <div class="text-center space-y-2">
-                <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">CAPTURE COMPLETE</span>
-                <h2 class="font-display text-3xl md:text-5xl font-bold uppercase tracking-tight text-espresso">Here is your photobooth strip!</h2>
-                <p class="font-hand text-2xl text-terracotta font-bold">"distance is a scam. look at you guys."</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                <!-- Composite Canvas Output -->
+        <!-- ========================================== -->
+        <!-- 4. FINAL PHOTO RESULT & EXPORT VIEW        -->
+        <!-- ========================================== -->
+        <section id="view-result" class="hidden max-w-5xl mx-auto px-4 md:px-8 py-10">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+                
+                <!-- Composite Strip Display -->
                 <div class="md:col-span-7 flex justify-center">
-                    <div class="paper-card p-3 rounded-2xl bg-cream shadow-2xl relative">
-                        <canvas id="final-composite-canvas" class="max-w-full h-auto rounded-lg border border-espresso/30"></canvas>
+                    <div class="paper-card p-4 rounded-3xl bg-sand shadow-2xl">
+                        <canvas id="final-composite-canvas" class="max-w-full h-auto rounded-xl border-2 border-espresso"></canvas>
                     </div>
                 </div>
 
-                <!-- Downloads & Scrapbook Actions -->
-                <div class="md:col-span-5 space-y-4">
-                    <div class="paper-card p-6 rounded-2xl space-y-4 bg-vanilla">
-                        <h3 class="font-display text-xl font-bold text-espresso uppercase border-b border-espresso/20 pb-2">Save & Keep</h3>
-                        
-                        <button onclick="downloadCompositePhoto()" class="paper-button w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-base">
-                            <i data-lucide="download" class="w-5 h-5"></i>
-                            <span>DOWNLOAD HIGH-RES STRIP</span>
-                        </button>
+                <!-- Download & Diary Actions -->
+                <div class="md:col-span-5 space-y-5">
+                    <div class="paper-card p-6 rounded-3xl bg-cream space-y-4">
+                        <span class="font-mono text-xs font-bold text-sage uppercase">● READY FOR THE ARCHIVES</span>
+                        <h2 class="font-display text-3xl font-bold uppercase text-espresso leading-tight">
+                            Look at you guys.
+                        </h2>
+                        <p class="text-sm text-espresso/80">
+                            Your synchronized photo strip is developed and ready. Download the high-resolution PNG or stick it directly into your FriendsBooth Diary.
+                        </p>
 
-                        <button onclick="stickPhotoToDiary()" class="paper-button-secondary w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-sm bg-sage/40">
-                            <i data-lucide="book-open" class="w-4 h-4"></i>
-                            <span>STICK TO SCRAPBOOK DIARY</span>
-                        </button>
+                        <div class="space-y-3 pt-2">
+                            <button onclick="downloadCompositePhoto()" class="paper-button w-full py-3.5 rounded-2xl text-base flex items-center justify-center gap-2">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                                <span>DOWNLOAD PHOTO (PNG)</span>
+                            </button>
 
-                        <button onclick="retakePhoto()" class="w-full py-2 text-espresso/70 hover:text-espresso font-mono text-xs text-center block underline font-bold">
-                            ← Retake photos in studio
-                        </button>
+                            <button onclick="stickPhotoToDiary()" class="paper-button-secondary w-full py-3 rounded-2xl text-sm flex items-center justify-center gap-2">
+                                <i data-lucide="book-heart" class="w-4 h-4 text-terracotta"></i>
+                                <span>STICK IN SCRAPBOOK DIARY</span>
+                            </button>
+
+                            <button onclick="retakePhoto()" class="w-full py-2.5 font-mono text-xs font-bold text-espresso/75 hover:text-espresso underline">
+                                ← Back to Booth & Retake
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- VIEW 6: AVATAR CREATOR STUDIO -->
-        <section id="view-avatar" class="hidden space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-espresso/20 pb-4">
+        <!-- ========================================== -->
+        <!-- 5. INTERACTIVE SCRAPBOOK DIARY VIEW        -->
+        <!-- ========================================== -->
+        <section id="view-diary" class="hidden max-w-4xl mx-auto px-4 py-10 space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                    <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">CUSTOM COMPANION</span>
-                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Interactive Avatar Creator</h2>
+                    <span class="font-mono text-xs font-bold text-terracotta uppercase">THE ARCHIVES</span>
+                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Friends Scrapbook Diary</h2>
                 </div>
-                <button onclick="showView('landing')" class="paper-button-secondary text-xs px-4 py-2 rounded-xl font-bold self-start">
-                    ← BACK TO HOME
+                <button onclick="addDiaryPage()" class="paper-button px-4 py-2.5 rounded-xl font-mono text-xs flex items-center gap-1.5">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    <span>ADD NEW PAGE</span>
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                
-                <!-- Avatar Live Preview Canvas Card -->
-                <div class="lg:col-span-5 flex flex-col items-center">
-                    <div class="paper-card p-6 rounded-3xl bg-cream space-y-4 w-full flex flex-col items-center">
-                        <div class="relative w-64 h-64 bg-sand rounded-2xl border-2 border-espresso overflow-hidden flex items-center justify-center shadow-inner">
-                            <canvas id="avatar-preview-canvas" width="300" height="300" class="w-full h-full object-contain"></canvas>
-                        </div>
-                        <div class="text-center">
-                            <span class="font-hand text-2xl font-bold text-terracotta">"Looking good!"</span>
-                            <p class="font-mono text-xs text-espresso/70">Your character walks at the bottom of your screen!</p>
-                        </div>
-                    </div>
-                </div>
+            <!-- Book Page Container -->
+            <div id="diary-book-wrapper" class="flex justify-center"></div>
 
-                <!-- 10 Categories Customization Options Dock -->
-                <div class="lg:col-span-7 space-y-4">
-                    <div class="paper-card p-6 rounded-3xl bg-cream space-y-6">
-                        
-                        <!-- Color Selectors -->
-                        <div class="flex flex-wrap gap-6 border-b border-espresso/20 pb-4">
-                            <div>
-                                <label class="font-mono text-xs font-bold text-espresso block mb-1">SKIN TONE</label>
-                                <div class="flex gap-2">
-                                    <button onclick="setAvatarColor('skin','#FFDFC4')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#FFDFC4"></button>
-                                    <button onclick="setAvatarColor('skin','#F0C8A0')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#F0C8A0"></button>
-                                    <button onclick="setAvatarColor('skin','#D09668')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#D09668"></button>
-                                    <button onclick="setAvatarColor('skin','#8D5524')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#8D5524"></button>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="font-mono text-xs font-bold text-espresso block mb-1">HAIR COLOR</label>
-                                <div class="flex gap-2">
-                                    <button onclick="setAvatarColor('hair','#2C221E')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#2C221E"></button>
-                                    <button onclick="setAvatarColor('hair','#B14A21')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#B14A21"></button>
-                                    <button onclick="setAvatarColor('hair','#E5C158')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#E5C158"></button>
-                                    <button onclick="setAvatarColor('hair','#3B82F6')" class="w-7 h-7 rounded-full border-2 border-espresso" style="background:#3B82F6"></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 10 Category Selectors Grid -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 font-mono text-xs">
-                            
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">1. HAIR STYLE (10)</label>
-                                <select onchange="setAvatarItem('hair', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Style 1: Short Spiky</option>
-                                    <option value="1">Style 2: Bob Cut</option>
-                                    <option value="2">Style 3: Curly Afro</option>
-                                    <option value="3">Style 4: Long Straight</option>
-                                    <option value="4">Style 5: Ponytail</option>
-                                    <option value="5">Style 6: Beanie Hat</option>
-                                    <option value="6">Style 7: Anime Spikes</option>
-                                    <option value="7">Style 8: Buzzcut</option>
-                                    <option value="8">Style 9: Side Part</option>
-                                    <option value="9">Style 10: Bald Top</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">2. EYES (10)</label>
-                                <select onchange="setAvatarItem('eyes', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Type 1: Classic Dots</option>
-                                    <option value="1">Type 2: Happy Arches</option>
-                                    <option value="2">Type 3: Anime Sparkles</option>
-                                    <option value="3">Type 4: Cool Dots</option>
-                                    <option value="4">Type 5: Wink Eye</option>
-                                    <option value="5">Type 6: Wide Open</option>
-                                    <option value="6">Type 7: Sleepy Lines</option>
-                                    <option value="7">Type 8: Heart Eyes</option>
-                                    <option value="8">Type 9: Star Eyes</option>
-                                    <option value="9">Type 10: Spider Goggles</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">3. NOSE (10)</label>
-                                <select onchange="setAvatarItem('nose', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Nose 1: Button Nose</option>
-                                    <option value="1">Nose 2: Pointy</option>
-                                    <option value="2">Nose 3: Round</option>
-                                    <option value="3">Nose 4: Hook Nose</option>
-                                    <option value="4">Nose 5: Tiny Dot</option>
-                                    <option value="5">Nose 6: Snout</option>
-                                    <option value="6">Nose 7: Square</option>
-                                    <option value="7">Nose 8: Piggy Nose</option>
-                                    <option value="8">Nose 9: Triangle</option>
-                                    <option value="9">Nose 10: Soft Line</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">4. MOUTH (10)</label>
-                                <select onchange="setAvatarItem('mouth', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Mouth 1: Gentle Smile</option>
-                                    <option value="1">Mouth 2: Big Grin</option>
-                                    <option value="2">Mouth 3: Open Cat Mouth</option>
-                                    <option value="3">Mouth 4: Neutral Line</option>
-                                    <option value="4">Mouth 5: Tongue Out</option>
-                                    <option value="5">Mouth 6: Surprised O</option>
-                                    <option value="6">Mouth 7: Smirk</option>
-                                    <option value="7">Mouth 8: Vampire Fangs</option>
-                                    <option value="8">Mouth 9: Whistle</option>
-                                    <option value="9">Mouth 10: Mustache Smile</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">5. EARS (10)</label>
-                                <select onchange="setAvatarItem('ears', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Ears 1: Standard Round</option>
-                                    <option value="1">Ears 2: Elf Pointy</option>
-                                    <option value="2">Ears 3: Small Lobes</option>
-                                    <option value="3">Ears 4: Big Ears</option>
-                                    <option value="4">Ears 5: Cat Ears Top</option>
-                                    <option value="5">Ears 6: Pierced Ring</option>
-                                    <option value="6">Ears 7: Headphones</option>
-                                    <option value="7">Ears 8: Bear Ears</option>
-                                    <option value="8">Ears 9: Goblin Ears</option>
-                                    <option value="9">Ears 10: Minimal Dots</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">6. BEARD / FACIAL HAIR (10)</label>
-                                <select onchange="setAvatarItem('beard', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Beard 1: Clean Shaven</option>
-                                    <option value="1">Beard 2: Full Beard</option>
-                                    <option value="2">Beard 3: Goatee</option>
-                                    <option value="3">Beard 4: Stubble</option>
-                                    <option value="4">Beard 5: Handlebar Mustache</option>
-                                    <option value="5">Beard 6: Wizard Beard</option>
-                                    <option value="6">Beard 7: Anchor Beard</option>
-                                    <option value="7">Beard 8: Soul Patch</option>
-                                    <option value="8">Beard 9: Mutton Chops</option>
-                                    <option value="9">Beard 10: Pencil Stache</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">7. GLASSES (10)</label>
-                                <select onchange="setAvatarItem('glasses', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Glasses 1: None</option>
-                                    <option value="1">Glasses 2: Round Frames</option>
-                                    <option value="2">Glasses 3: Retro Square</option>
-                                    <option value="3">Glasses 4: Cool Sunglasses</option>
-                                    <option value="4">Glasses 5: Heart Specs</option>
-                                    <option value="5">Glasses 6: Monocle</option>
-                                    <option value="6">Glasses 7: Anime Shiny Specs</option>
-                                    <option value="7">Glasses 8: VR Headset</option>
-                                    <option value="8">Glasses 9: Star Shades</option>
-                                    <option value="9">Glasses 10: Reading Glasses</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">8. SHIRT (10)</label>
-                                <select onchange="setAvatarItem('shirt', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Shirt 1: T-Shirt</option>
-                                    <option value="1">Shirt 2: Hoodie</option>
-                                    <option value="2">Shirt 3: Sweater</option>
-                                    <option value="3">Shirt 4: Denim Jacket</option>
-                                    <option value="4">Shirt 5: Hawaiian Shirt</option>
-                                    <option value="5">Shirt 6: Suit & Tie</option>
-                                    <option value="6">Shirt 7: Anime Robe</option>
-                                    <option value="7">Shirt 8: Spidey Suit</option>
-                                    <option value="8">Shirt 9: Tank Top</option>
-                                    <option value="9">Shirt 10: Striped Tee</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">9. PANTS (10)</label>
-                                <select onchange="setAvatarItem('pants', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Pants 1: Jeans</option>
-                                    <option value="1">Pants 2: Cargo Pants</option>
-                                    <option value="2">Pants 3: Shorts</option>
-                                    <option value="3">Pants 4: Sweatpants</option>
-                                    <option value="4">Pants 5: Hakama Skirt</option>
-                                    <option value="5">Pants 6: Overalls</option>
-                                    <option value="6">Pants 7: Pleated Skirt</option>
-                                    <option value="7">Pants 8: Track Pants</option>
-                                    <option value="8">Pants 9: Leather Pants</option>
-                                    <option value="9">Pants 10: Pattern Trousers</option>
-                                </select>
-                            </div>
-
-                            <div class="space-y-1">
-                                <label class="font-bold text-espresso">10. SHOES (10)</label>
-                                <select onchange="setAvatarItem('shoes', this.value)" class="w-full bg-sand border border-espresso rounded-lg p-2 font-bold">
-                                    <option value="0">Shoes 1: High Kicks Sneakers</option>
-                                    <option value="1">Shoes 2: Leather Boots</option>
-                                    <option value="2">Shoes 3: Loafers</option>
-                                    <option value="3">Shoes 4: High Tops</option>
-                                    <option value="4">Shoes 5: Flip Flops</option>
-                                    <option value="5">Shoes 6: Roller Skates</option>
-                                    <option value="6">Shoes 7: Barefoot</option>
-                                    <option value="7">Shoes 8: Canvas Shoes</option>
-                                    <option value="8">Shoes 9: Dress Shoes</option>
-                                    <option value="9">Shoes 10: Bunny Slippers</option>
-                                </select>
-                            </div>
-
-                        </div>
-
-                    </div>
-                </div>
-
-            </div>
-        </section>
-
-        <!-- VIEW 7: 3D PAGE-TURNING SCRAPBOOK DIARY -->
-        <section id="view-diary" class="hidden space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-espresso/20 pb-4">
-                <div>
-                    <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">MEMORIES ARCHIVE</span>
-                    <h2 class="font-display text-3xl font-bold uppercase text-espresso">Interactive Scrapbook Diary</h2>
-                </div>
-                <div class="flex items-center gap-3">
-                    <button onclick="addDiaryPage()" class="paper-button text-xs px-4 py-2 rounded-xl font-bold flex items-center gap-1.5">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
-                        <span>ADD NEW PAGE</span>
-                    </button>
-                    <button onclick="showView('landing')" class="paper-button-secondary text-xs px-4 py-2 rounded-xl font-bold">
-                        ← HOME
-                    </button>
-                </div>
-            </div>
-
-            <!-- 3D Book Container -->
-            <div class="book-container w-full max-w-4xl mx-auto min-h-[550px] relative py-4">
-                
-                <div id="diary-book-wrapper" class="w-full h-full relative flex justify-center">
-                    <!-- Pages dynamically rendered here with 3D Flip -->
-                </div>
-
-                <!-- Page Flip Controls -->
-                <div class="flex items-center justify-between max-w-2xl mx-auto pt-6 font-mono text-xs">
-                    <button onclick="prevDiaryPage()" class="paper-button-secondary px-4 py-2 rounded-xl font-bold">
-                        ← PREVIOUS PAGE
-                    </button>
-                    <span id="diary-page-indicator" class="font-bold text-espresso">PAGE 1 OF 3</span>
-                    <button onclick="nextDiaryPage()" class="paper-button-secondary px-4 py-2 rounded-xl font-bold">
-                        NEXT PAGE →
-                    </button>
-                </div>
-
+            <!-- Page Flip Controls -->
+            <div class="flex items-center justify-between max-w-xl mx-auto pt-2 font-mono text-xs">
+                <button onclick="prevDiaryPage()" class="paper-button-secondary px-4 py-2.5 rounded-xl font-bold">
+                    ← PREVIOUS PAGE
+                </button>
+                <span id="diary-page-indicator" class="font-bold text-espresso">PAGE 1 OF 4</span>
+                <button onclick="nextDiaryPage()" class="paper-button-secondary px-4 py-2.5 rounded-xl font-bold">
+                    NEXT PAGE →
+                </button>
             </div>
         </section>
 
     </main>
 
-    <!-- WALKING AVATAR SCREEN COMPANION -->
-    <div id="walking-avatar-container" class="fixed bottom-0 left-10 z-40 cursor-grab active:cursor-grabbing pointer-events-auto flex flex-col items-center select-none" style="transform: translateX(0px);">
-        <!-- Speech Bubble -->
-        <div id="avatar-speech-bubble" class="bg-butter border-2 border-espresso px-3 py-1.5 rounded-xl text-xs font-hand font-bold text-espresso shadow-[2px_2px_0px_#51463D] mb-1 animate-bounce">
-            "POSE, IDIOT!"
+    <!-- COUNTDOWN OVERLAY MODAL -->
+    <div id="countdown-modal" class="fixed inset-0 z-50 bg-espresso/75 backdrop-blur-sm hidden flex flex-col items-center justify-center text-cream p-4">
+        <p id="countdown-subtext" class="font-mono text-sm tracking-widest uppercase text-butter font-bold mb-2">
+            SYNCHRONIZED CAPTURE IN
+        </p>
+        <div id="countdown-number" class="font-display font-extrabold text-8xl sm:text-9xl text-cream drop-shadow-[6px_6px_0px_#D88772] scale-110 transition-transform">
+            3
         </div>
-        <!-- Rendered Walking Canvas -->
-        <canvas id="walking-avatar-canvas" width="70" height="90" onclick="handleAvatarClick(event)"></canvas>
+        <p class="font-hand text-3xl text-butter mt-4">"POSE, IDIOT!"</p>
     </div>
 
-    <!-- CREATE BOOTH MODAL -->
-    <div id="modal-create" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full bg-cream space-y-6 relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="space-y-1">
-                <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">START A BOOTH</span>
-                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Create FriendsBooth</h3>
+    <!-- CREATE & JOIN BOOTH MODALS -->
+    <div id="create-modal" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full space-y-5 bg-cream relative">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta font-bold text-xl">✕</button>
+            <div>
+                <span class="font-mono text-xs uppercase tracking-widest text-terracotta font-bold">NEW SESSION</span>
+                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Create a Photo Booth</h3>
             </div>
-
-            <form onsubmit="handleCreateBoothSubmit(event)" class="space-y-4 font-mono text-xs">
-                <div class="space-y-1">
-                    <label class="font-bold text-espresso block">BOOTH NAME</label>
-                    <input type="text" id="create-booth-name" required value="Ray's Long Distance Club" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono font-bold focus:outline-none">
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="font-bold block mb-1">BOOTH NAME</label>
+                    <input type="text" id="input-room-name" value="Abrish's Squad" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold focus:outline-none">
                 </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold text-espresso block">YOUR DISPLAY NAME</label>
-                    <input type="text" id="create-host-name" required value="Abrish" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono font-bold focus:outline-none">
+                <div>
+                    <label class="font-bold block mb-1">YOUR DISPLAY NAME</label>
+                    <input type="text" id="input-user-name" value="Abrish" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold focus:outline-none">
                 </div>
-
-                <div class="pt-2">
-                    <button type="submit" class="paper-button w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i>
-                        <span>LAUNCH BOOTH STUDIO</span>
-                    </button>
+                <div>
+                    <label class="font-bold block mb-1">INITIAL SCENE</label>
+                    <select id="input-room-scene" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold">
+                        <option value="studio">Warm Analog Studio</option>
+                        <option value="anime">⚡ Anime Special Edition</option>
+                        <option value="spidey">🕷️ Spider-Man Comic Edition</option>
+                        <option value="cafe">Vintage Parisian Café</option>
+                        <option value="space">Outer Space Stars</option>
+                    </select>
                 </div>
-            </form>
+            </div>
+            <button onclick="submitCreateRoom()" class="paper-button w-full py-3 rounded-xl font-bold text-base">
+                LAUNCH STUDIO →
+            </button>
         </div>
     </div>
 
-    <!-- JOIN BOOTH MODAL -->
-    <div id="modal-join" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full bg-cream space-y-6 relative">
-            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-
-            <div class="space-y-1">
-                <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">JOIN BOOTH</span>
-                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Enter Code</h3>
+    <div id="join-modal" class="fixed inset-0 z-50 bg-espresso/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="paper-card p-6 md:p-8 rounded-3xl max-w-md w-full space-y-5 bg-cream relative">
+            <button onclick="closeModals()" class="absolute top-4 right-4 text-espresso hover:text-terracotta font-bold text-xl">✕</button>
+            <div>
+                <span class="font-mono text-xs uppercase tracking-widest text-sage font-bold">JOIN FRIENDS</span>
+                <h3 class="font-display text-2xl font-bold uppercase text-espresso">Enter Booth Code</h3>
             </div>
-
-            <form onsubmit="handleJoinBoothSubmit(event)" class="space-y-4 font-mono text-xs">
-                <div class="space-y-1">
-                    <label class="font-bold text-espresso block">ROOM CODE (6-DIGITS)</label>
-                    <input type="text" id="join-room-code" required placeholder="e.g. ABCD12" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono uppercase font-bold focus:outline-none">
+            <div class="space-y-3 font-mono text-xs">
+                <div>
+                    <label class="font-bold block mb-1">6-DIGIT ROOM CODE</label>
+                    <input type="text" id="join-room-code" placeholder="e.g. RAY123" maxlength="6" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold uppercase tracking-widest focus:outline-none">
                 </div>
-
-                <div class="space-y-1">
-                    <label class="font-bold text-espresso block">YOUR DISPLAY NAME</label>
-                    <input type="text" id="join-user-name" required value="Friend" class="w-full p-3 rounded-xl border border-espresso bg-vanilla text-espresso font-mono font-bold focus:outline-none">
+                <div>
+                    <label class="font-bold block mb-1">YOUR DISPLAY NAME</label>
+                    <input type="text" id="join-user-name" value="Friend" class="w-full bg-vanilla border-2 border-espresso rounded-xl p-2.5 font-bold focus:outline-none">
                 </div>
-
-                <div class="pt-2">
-                    <button type="submit" class="paper-button-secondary w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
-                        <i data-lucide="log-in" class="w-4 h-4"></i>
-                        <span>JOIN BOOTH</span>
-                    </button>
-                </div>
-            </form>
+            </div>
+            <button onclick="submitJoinRoom()" class="paper-button w-full py-3 rounded-xl font-bold text-base">
+                ENTER BOOTH →
+            </button>
         </div>
     </div>
 
     <!-- FOOTER -->
-    <footer class="border-t-2 border-espresso/20 py-6 px-4 bg-vanilla">
+    <footer class="border-t-2 border-espresso/20 py-6 px-4 bg-vanilla mt-12">
         <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs text-espresso/70">
             <div class="flex items-center gap-2">
                 <span class="font-display font-bold text-espresso text-lg">FriendsBooth.io</span>
@@ -874,44 +613,19 @@
             userName: 'Abrish',
             isReady: false,
             localStream: null,
-            useSimulatedCam: false,
+            showVirtualFriend: false,
             cameraActive: false,
-            segmentationActive: true,
-            selectedScene: 'anime', // anime, spidey, cafe, space, beach, arcade, greenhouse
+            segmentationActive: false, // Default OFF so full webcam renders immediately & reliably
+            selectedScene: 'studio',
             selectedFilter: 'filter-warm',
-            captureMode: 1, // 1, 4, 6
-            capturedPoses: [], // array of Canvas data URLs
-            // Stage Positioning
+            captureMode: 1,
+            capturedPoses: [],
             stagePos: { x: 0, y: 0, scale: 1 },
-            // Avatar Configuration
-            avatar: {
-                skin: '#FFDFC4',
-                hairColor: '#2C221E',
-                hair: 0,
-                eyes: 0,
-                nose: 0,
-                mouth: 0,
-                ears: 0,
-                beard: 0,
-                glasses: 0,
-                shirt: 0,
-                pants: 0,
-                shoes: 0
-            },
-            // Companion Walking State
-            avatarWalk: {
-                x: 80,
-                targetX: 80,
-                isWalking: false,
-                legAngle: 0,
-                direction: 1
-            },
-            // Diary State
             diary: {
                 currentPage: 0,
                 pages: [
-                    { id: 1, title: 'My Friends Memories', text: 'Stuck our best photobooth shots here! Distance is stupid.', font: 'font-hand', textScale: 1.2, attachedPhoto: null, photoScale: 1, photoRotate: -2 },
-                    { id: 2, title: 'Tokyo - NYC Reunion', text: 'We took this at 3 AM across timezones. Best moment ever!', font: 'font-hand', textScale: 1.1, attachedPhoto: null, photoScale: 1, photoRotate: 3 }
+                    { id: 1, title: 'My Friends Memories', text: 'Stuck our best photobooth shots here! Distance is stupid.', font: 'font-hand', attachedPhoto: null, photoScale: 1, photoRotate: -2 },
+                    { id: 2, title: 'Late Night VC Reunion', text: 'We took this across timezones. Best moment ever!', font: 'font-hand', attachedPhoto: null, photoScale: 1, photoRotate: 2 }
                 ],
                 checklist: [
                     { name: 'Bhav', done: true },
@@ -936,36 +650,24 @@
             }
         };
 
-        // SCENE IMAGES
-        const sceneImages = {
-            cafe: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80',
-            space: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1200&auto=format&fit=crop&q=80',
-            beach: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&auto=format&fit=crop&q=80',
-            arcade: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&auto=format&fit=crop&q=80',
-            greenhouse: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=1200&auto=format&fit=crop&q=80',
-            anime: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1200&auto=format&fit=crop&q=80',
-            spidey: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=1200&auto=format&fit=crop&q=80'
-        };
-
         // DOM LOAD INITIALIZATION
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
-            initAvatarWalkAnimation();
-            renderAvatarPreview();
             renderDiaryBook();
-            
-            // Ground click to walk avatar
-            document.body.addEventListener('click', (e) => {
-                // Ignore if clicked inside interactive buttons or modals
-                if (e.target.closest('button') || e.target.closest('input') || e.target.closest('select') || e.target.closest('.paper-card')) return;
-                state.avatarWalk.targetX = Math.max(20, Math.min(window.innerWidth - 80, e.clientX - 35));
-            });
+
+            // Check if URL has ?room=CODE
+            const params = new URLSearchParams(window.location.search);
+            const roomParam = params.get('room');
+            if (roomParam) {
+                document.getElementById('join-room-code').value = roomParam.toUpperCase();
+                openJoinModal();
+            }
         });
 
         // VIEW ROUTER
         function showView(viewName) {
             state.currentView = viewName;
-            const views = ['landing', 'room', 'developing', 'result', 'avatar', 'diary'];
+            const views = ['landing', 'room', 'developing', 'result', 'diary'];
             views.forEach(v => {
                 const el = document.getElementById(`view-${v}`);
                 if (el) {
@@ -978,124 +680,388 @@
             if (viewName === 'diary') renderDiaryBook();
         }
 
-        // MODALS
-        function openCreateModal() { document.getElementById('modal-create').classList.remove('hidden'); }
-        function openJoinModal() { document.getElementById('modal-join').classList.remove('hidden'); }
+        function scrollToHowItWorks() {
+            showView('landing');
+            setTimeout(() => {
+                const el = document.getElementById('how-it-works-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+
+        // MODALS & ROOM SUBMISSION
+        function openCreateModal() {
+            document.getElementById('create-modal').classList.remove('hidden');
+        }
+
+        function openJoinModal() {
+            document.getElementById('join-modal').classList.remove('hidden');
+        }
+
         function closeModals() {
-            document.getElementById('modal-create').classList.add('hidden');
-            document.getElementById('modal-join').classList.add('hidden');
+            document.getElementById('create-modal').classList.add('hidden');
+            document.getElementById('join-modal').classList.add('hidden');
         }
 
-        function handleCreateBoothSubmit(e) {
-            e.preventDefault();
-            state.roomName = document.getElementById('create-booth-name').value;
-            state.userName = document.getElementById('create-host-name').value;
+        function submitCreateRoom() {
+            const rName = document.getElementById('input-room-name').value.trim() || 'Friends Club';
+            const uName = document.getElementById('input-user-name').value.trim() || 'Abrish';
+            const scene = document.getElementById('input-room-scene').value;
+            
+            state.roomName = rName;
+            state.userName = uName;
             state.roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            closeModals();
-            showView('room');
-        }
+            state.selectedScene = scene;
 
-        function handleJoinBoothSubmit(e) {
-            e.preventDefault();
-            state.roomCode = document.getElementById('join-room-code').value.toUpperCase();
-            state.userName = document.getElementById('join-user-name').value;
-            closeModals();
-            showView('room');
-        }
-
-        // STUDIO STAGE & CAMERA ENGINE
-        async function startStudioStage() {
             document.getElementById('room-header-title').innerText = `ROOM: ${state.roomName}`;
             document.getElementById('room-header-code').innerText = state.roomCode;
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
-                state.localStream = stream;
-                state.useSimulatedCam = false;
-            } catch(e) {
-                console.warn('Webcam unavailable. Activating procedural studio fallback camera.', e);
-                state.useSimulatedCam = true;
-            }
-            state.cameraActive = true;
-            requestAnimationFrame(renderStudioFrameLoop);
+            document.getElementById('select-scene').value = scene;
+
+            closeModals();
+            showView('room');
+            showToast(`Booth ${state.roomCode} created!`);
         }
 
-        // LIVE CANVAS STAGE RENDER LOOP
-        function renderStudioFrameLoop() {
-            if (state.currentView !== 'room') return;
+        function submitJoinRoom() {
+            const code = document.getElementById('join-room-code').value.trim().toUpperCase() || 'RAY123';
+            const uName = document.getElementById('join-user-name').value.trim() || 'Friend';
+
+            state.roomCode = code;
+            state.roomName = `Booth #${code}`;
+            state.userName = uName;
+
+            document.getElementById('room-header-title').innerText = `ROOM: ${state.roomName}`;
+            document.getElementById('room-header-code').innerText = state.roomCode;
+
+            closeModals();
+            showView('room');
+            showToast(`Joined Booth ${state.roomCode}!`);
+        }
+
+        // ============================================================
+        // ROBUST LIVE STUDIO WEBCAM & COMPOSITE STAGE ENGINE
+        // ============================================================
+        let stageAnimFrame = null;
+        let selfieSegmentation = null;
+        let latestSegmentationMask = null;
+        let isSendingMask = false;
+        let isDraggingStage = false;
+        let stageDragStart = { x: 0, y: 0 };
+
+        const offscreenPersonCanvas = document.createElement('canvas');
+        offscreenPersonCanvas.width = 640;
+        offscreenPersonCanvas.height = 480;
+        const offscreenPersonCtx = offscreenPersonCanvas.getContext('2d');
+
+        async function startStudioStage() {
             const canvas = document.getElementById('live-stage-canvas');
             if (!canvas) return;
-            const ctx = canvas.getContext('2d');
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Pointer drag on stage canvas to reposition yourself
+            canvas.onpointerdown = (e) => {
+                isDraggingStage = true;
+                stageDragStart = { x: e.clientX - state.stagePos.x, y: e.clientY - state.stagePos.y };
+                canvas.setPointerCapture(e.pointerId);
+            };
+            canvas.onpointermove = (e) => {
+                if (!isDraggingStage) return;
+                state.stagePos.x = Math.max(-220, Math.min(220, e.clientX - stageDragStart.x));
+                state.stagePos.y = Math.max(-160, Math.min(160, e.clientY - stageDragStart.y));
+                document.getElementById('pos-x-range').value = state.stagePos.x;
+                document.getElementById('pos-y-range').value = state.stagePos.y;
+            };
+            canvas.onpointerup = () => { isDraggingStage = false; };
 
-            // 1. Draw Background Scene
-            const img = new Image();
-            img.src = sceneImages[state.selectedScene] || sceneImages.cafe;
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            await retryCameraAccess();
 
-            // 2. Draw Special Theme Canvas Graphics
-            if (state.selectedScene === 'anime') {
-                ctx.fillStyle = 'rgba(255, 204, 0, 0.15)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#51463D';
-                ctx.font = 'bold 24px "Space Grotesk", sans-serif';
-                ctx.fillText('ゴゴゴゴ (GO GO GO)', 20, 40);
-            } else if (state.selectedScene === 'spidey') {
-                ctx.strokeStyle = '#DC2626';
-                ctx.lineWidth = 12;
-                ctx.strokeRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#DC2626';
-                ctx.font = 'bold 28px "Space Grotesk", sans-serif';
-                ctx.fillText('THWIP!', canvas.width - 120, 50);
+            if (stageAnimFrame) cancelAnimationFrame(stageAnimFrame);
+            renderStageLoop();
+        }
+
+        async function retryCameraAccess() {
+            const videoEl = document.getElementById('webcam-video');
+            const statusLabel = document.getElementById('cam-status-label');
+            if (!videoEl) return;
+
+            try {
+                if (state.localStream) {
+                    state.localStream.getTracks().forEach(t => t.stop());
+                }
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+                    audio: false
+                });
+                state.localStream = stream;
+                videoEl.srcObject = stream;
+                await videoEl.play();
+                state.cameraActive = true;
+                if (statusLabel) statusLabel.innerText = '● CAMERA LIVE';
+                initMediaPipeSegmentation();
+            } catch (err) {
+                console.warn('Camera permission or device error:', err);
+                state.cameraActive = false;
+                if (statusLabel) statusLabel.innerText = '⚠ CAMERA BLOCKED / UNAVAILABLE (CLICK ENABLE CAMERA)';
+                showToast('Please allow camera permissions in your browser!');
             }
+        }
 
-            // 3. Render Participant Cutout / Video / Sim
+        function initMediaPipeSegmentation() {
+            try {
+                if (typeof SelfieSegmentation !== 'undefined' && !selfieSegmentation) {
+                    selfieSegmentation = new SelfieSegmentation({
+                        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+                    });
+                    selfieSegmentation.setOptions({ modelSelection: 1 });
+                    selfieSegmentation.onResults((results) => {
+                        latestSegmentationMask = results.segmentationMask;
+                        isSendingMask = false;
+                    });
+                }
+            } catch (e) {
+                console.warn('MediaPipe segmentation unavailable:', e);
+            }
+        }
+
+        function drawSceneBackdropOnCanvas(ctx, w, h, sceneKey) {
             ctx.save();
-            const posX = canvas.width / 2 - 150 + state.stagePos.x;
-            const posY = canvas.height / 2 - 150 + state.stagePos.y;
-            const size = 300 * state.stagePos.scale;
+            if (sceneKey === 'anime') {
+                // Warm manga sunset + speedlines
+                const grad = ctx.createLinearGradient(0, 0, w, h);
+                grad.addColorStop(0, '#FDE68A');
+                grad.addColorStop(0.5, '#FCA5A5');
+                grad.addColorStop(1, '#FDBA74');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
 
-            if (state.useSimulatedCam || !state.localStream) {
-                // Procedural Simulated Video Feed (Animated Character)
-                ctx.fillStyle = '#FBF7F0';
-                ctx.strokeStyle = '#51463D';
-                ctx.lineWidth = 4;
-                ctx.fillRect(posX, posY, size, size);
-                ctx.strokeRect(posX, posY, size, size);
+                // Manga radial lines
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+                ctx.lineWidth = 2;
+                for (let angle = 0; angle < Math.PI * 2; angle += 0.15) {
+                    ctx.beginPath();
+                    ctx.moveTo(w / 2 + Math.cos(angle) * 140, h / 2 + Math.sin(angle) * 140);
+                    ctx.lineTo(w / 2 + Math.cos(angle) * 450, h / 2 + Math.sin(angle) * 450);
+                    ctx.stroke();
+                }
+            } else if (sceneKey === 'spidey') {
+                // Spider-Man comic blue/red halftone backdrop
+                const grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#1D4ED8');
+                grad.addColorStop(1, '#1E1B4B');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
 
-                // Draw Avatar head in box
-                drawAvatarGraphic(ctx, posX + size/2, posY + size/2 + 20, size/200);
-
-                ctx.fillStyle = '#51463D';
-                ctx.font = 'bold 16px "DM Mono", monospace';
-                ctx.fillText(`${state.userName} (Studio Sim)`, posX + 15, posY + 30);
+                ctx.fillStyle = 'rgba(239, 68, 68, 0.28)';
+                for (let x = 20; x < w; x += 28) {
+                    for (let y = 20; y < h; y += 28) {
+                        ctx.beginPath();
+                        ctx.arc(x, y, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            } else if (sceneKey === 'cafe') {
+                ctx.fillStyle = '#D9B99B';
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = '#F3EBDD';
+                ctx.fillRect(30, 30, w - 60, h - 110);
+            } else if (sceneKey === 'space') {
+                ctx.fillStyle = '#0F172A';
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = '#FDE047';
+                for (let i = 0; i < 45; i++) {
+                    const sx = (i * 137) % w;
+                    const sy = (i * 89) % h;
+                    ctx.fillRect(sx, sy, 3, 3);
+                }
+            } else if (sceneKey === 'beach') {
+                const grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#38BDF8');
+                grad.addColorStop(0.65, '#BAE6FD');
+                grad.addColorStop(0.66, '#FDE68A');
+                grad.addColorStop(1, '#F59E0B');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
             } else {
-                // Live Webcam Video frame
-                const videoEl = getHiddenVideoElement();
-                ctx.drawImage(videoEl, posX, posY, size, size);
+                // Warm Analog Studio default
+                ctx.fillStyle = '#E9DFCF';
+                ctx.fillRect(0, 0, w, h);
             }
             ctx.restore();
-
-            requestAnimationFrame(renderStudioFrameLoop);
         }
 
-        let hiddenVideo = null;
-        function getHiddenVideoElement() {
-            if (!hiddenVideo) {
-                hiddenVideo = document.createElement('video');
-                hiddenVideo.autoplay = true;
-                hiddenVideo.playsInline = true;
-                hiddenVideo.muted = true;
-                hiddenVideo.srcObject = state.localStream;
+        function renderStageLoop() {
+            const canvas = document.getElementById('live-stage-canvas');
+            const videoEl = document.getElementById('webcam-video');
+            if (!canvas || state.currentView !== 'room') return;
+
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 1. Always paint the selected scene background onto the canvas
+            drawSceneBackdropOnCanvas(ctx, w, h, state.selectedScene);
+
+            // 2. Render Live Webcam Video Feed
+            if (state.cameraActive && videoEl && videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+                // Trigger background segmentation asynchronously if toggled ON
+                if (state.segmentationActive && selfieSegmentation && !isSendingMask) {
+                    isSendingMask = true;
+                    selfieSegmentation.send({ image: videoEl }).catch(() => { isSendingMask = false; });
+                }
+
+                offscreenPersonCtx.save();
+                offscreenPersonCtx.clearRect(0, 0, 640, 480);
+                // Mirror webcam horizontally like a real mirror
+                offscreenPersonCtx.translate(640, 0);
+                offscreenPersonCtx.scale(-1, 1);
+
+                if (state.segmentationActive && latestSegmentationMask) {
+                    offscreenPersonCtx.drawImage(latestSegmentationMask, 0, 0, 640, 480);
+                    offscreenPersonCtx.globalCompositeOperation = 'source-in';
+                    offscreenPersonCtx.drawImage(videoEl, 0, 0, 640, 480);
+                    offscreenPersonCtx.globalCompositeOperation = 'source-over';
+                } else {
+                    // Draw full crisp webcam frame so user is ALWAYS visible
+                    offscreenPersonCtx.drawImage(videoEl, 0, 0, 640, 480);
+                }
+                offscreenPersonCtx.restore();
+
+                // Draw onto stage at user's chosen X, Y, and Scale
+                ctx.save();
+                const drawW = (state.segmentationActive ? 520 : 560) * state.stagePos.scale;
+                const drawH = (state.segmentationActive ? 390 : 400) * state.stagePos.scale;
+                const drawX = (w - drawW) / 2 + state.stagePos.x;
+                const drawY = (h - drawH) / 2 + state.stagePos.y;
+
+                ctx.drawImage(offscreenPersonCanvas, drawX, drawY, drawW, drawH);
+
+                // Add crisp photo border when background removal is OFF
+                if (!state.segmentationActive) {
+                    ctx.strokeStyle = '#51463D';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(drawX, drawY, drawW, drawH);
+                }
+                ctx.restore();
+            } else {
+                // Clear prompt when camera is off or awaiting permission
+                ctx.save();
+                ctx.fillStyle = '#FBF7F0';
+                ctx.strokeStyle = '#51463D';
+                ctx.lineWidth = 3;
+                ctx.fillRect(w / 2 - 190, h / 2 - 55, 380, 110);
+                ctx.strokeRect(w / 2 - 190, h / 2 - 55, 380, 110);
+                ctx.fillStyle = '#51463D';
+                ctx.font = 'bold 16px "Space Grotesk", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('CAMERA NOT ACTIVE', w / 2, h / 2 - 12);
+                ctx.font = '12px "DM Mono", monospace';
+                ctx.fillText('Click "Enable Camera" at the top right!', w / 2, h / 2 + 16);
+                ctx.restore();
             }
-            return hiddenVideo;
+
+            // 3. Optional Remote Friend Preview
+            if (state.showVirtualFriend) {
+                drawSimulatedFriend(ctx, w * 0.76, h * 0.62, 'Ray (Remote)');
+            }
+
+            // 4. Special Edition Overlays (Anime / Spider-Man)
+            if (state.selectedScene === 'anime') {
+                drawAnimeFrameFX(ctx, w, h);
+            } else if (state.selectedScene === 'spidey') {
+                drawSpideyFrameFX(ctx, w, h);
+            }
+
+            // 5. Participant Name Tag
+            ctx.save();
+            ctx.fillStyle = '#FBF7F0';
+            ctx.strokeStyle = '#51463D';
+            ctx.lineWidth = 2;
+            ctx.fillRect(16, h - 42, 180, 26);
+            ctx.strokeRect(16, h - 42, 180, 26);
+            ctx.fillStyle = '#51463D';
+            ctx.font = 'bold 12px "DM Mono", monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(`● ${state.userName.toUpperCase()}`, 26, h - 25);
+            ctx.restore();
+
+            stageAnimFrame = requestAnimationFrame(renderStageLoop);
         }
 
-        // STAGE CONTROLS
+        function drawSimulatedFriend(ctx, cx, cy, label) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.fillStyle = '#A5B494';
+            ctx.strokeStyle = '#51463D';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(-55, 20, 110, 95, 20);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#E5B887';
+            ctx.beginPath();
+            ctx.arc(0, -25, 38, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#1C1917';
+            ctx.beginPath(); ctx.arc(-12, -25, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(12, -25, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(0, -15, 12, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+
+            ctx.fillStyle = '#E9CB73';
+            ctx.fillRect(-52, 65, 104, 22);
+            ctx.strokeRect(-52, 65, 104, 22);
+            ctx.fillStyle = '#51463D';
+            ctx.font = 'bold 11px "DM Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, 0, 80);
+            ctx.restore();
+        }
+
+        function drawAnimeFrameFX(ctx, w, h) {
+            ctx.save();
+            ctx.strokeStyle = '#18181B';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(5, 5, w - 10, h - 10);
+            ctx.fillStyle = '#E9CB73';
+            ctx.strokeStyle = '#18181B';
+            ctx.lineWidth = 3;
+            ctx.fillRect(w - 145, 18, 125, 36);
+            ctx.strokeRect(w - 145, 18, 125, 36);
+            ctx.fillStyle = '#18181B';
+            ctx.font = 'bold 18px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('ゴゴゴゴ!!', w - 132, 43);
+            ctx.restore();
+        }
+
+        function drawSpideyFrameFX(ctx, w, h) {
+            ctx.save();
+            ctx.strokeStyle = '#DC2626';
+            ctx.lineWidth = 14;
+            ctx.strokeRect(7, 7, w - 14, h - 14);
+            ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(140, i * 35);
+                ctx.stroke();
+            }
+            ctx.fillStyle = '#FACC15';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 3;
+            ctx.fillRect(20, 20, 105, 34);
+            ctx.strokeRect(20, 20, 105, 34);
+            ctx.fillStyle = '#000';
+            ctx.font = '900 18px "Space Grotesk", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('THWIP!!', 34, 43);
+            ctx.restore();
+        }
+
         function updateStagePosition() {
-            state.stagePos.x = parseInt(document.getElementById('pos-x-range').value);
-            state.stagePos.y = parseInt(document.getElementById('pos-y-range').value);
+            state.stagePos.x = parseFloat(document.getElementById('pos-x-range').value);
+            state.stagePos.y = parseFloat(document.getElementById('pos-y-range').value);
             state.stagePos.scale = parseFloat(document.getElementById('scale-range').value);
         }
 
@@ -1104,105 +1070,86 @@
             document.getElementById('pos-x-range').value = 0;
             document.getElementById('pos-y-range').value = 0;
             document.getElementById('scale-range').value = 1;
+            showToast('Frame position centered!');
         }
 
-        function changeCaptureMode(val) {
-            state.captureMode = parseInt(val);
-            const btnLabel = document.getElementById('capture-btn-label');
-            if (state.captureMode === 1) btnLabel.innerText = 'TAKE PHOTO';
-            else btnLabel.innerText = `TAKE ${state.captureMode}-SHOT STRIP`;
-            showToast(`Mode set to ${val}-Shot Sequence`);
-        }
-
-        function changeScene(val) {
-            state.selectedScene = val;
-            const bgOverlay = document.getElementById('scene-bg-overlay');
-            const animeOver = document.getElementById('anime-overlay');
-            const spideyOver = document.getElementById('spidey-overlay');
-
-            bgOverlay.style.backgroundImage = `url('${sceneImages[val] || sceneImages.cafe}')`;
-
-            if (val === 'anime') {
-                animeOver.classList.remove('hidden');
-                spideyOver.classList.add('hidden');
-            } else if (val === 'spidey') {
-                spideyOver.classList.remove('hidden');
-                animeOver.classList.add('hidden');
-            } else {
-                animeOver.classList.add('hidden');
-                spideyOver.classList.add('hidden');
-            }
+        function changeScene(sceneKey) {
+            state.selectedScene = sceneKey;
         }
 
         function toggleBackgroundRemoval() {
             state.segmentationActive = !state.segmentationActive;
             const btn = document.getElementById('bg-toggle-btn');
-            btn.innerText = state.segmentationActive ? 'ON' : 'OFF';
-            btn.className = `font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso ${state.segmentationActive ? 'bg-sage text-espresso' : 'bg-sand text-espresso'}`;
+            btn.innerText = state.segmentationActive ? 'ON (CUTOUT)' : 'OFF (FULL CAM)';
+            btn.className = `font-mono text-xs font-bold px-3 py-1 rounded-lg border border-espresso ${state.segmentationActive ? 'bg-sage text-espresso' : 'bg-sand text-espresso/75'}`;
+            showToast(`Background removal ${state.segmentationActive ? 'enabled' : 'disabled'}`);
         }
 
         function setFilter(filterClass) {
             state.selectedFilter = filterClass;
-            showToast(`Filter applied: ${filterClass}`);
+            const canvas = document.getElementById('live-stage-canvas');
+            canvas.className = `w-full max-w-[640px] h-auto rounded-2xl border-2 border-cream shadow-xl cursor-move bg-sand ${filterClass}`;
         }
 
-        function toggleCamera() {
-            if (state.localStream) {
-                const track = state.localStream.getVideoTracks()[0];
-                if (track) track.enabled = !track.enabled;
-            }
-        }
-
-        function toggleVirtualSim() {
-            state.useSimulatedCam = !state.useSimulatedCam;
-            showToast(state.useSimulatedCam ? 'Activated Fallback Studio Sim' : 'Switched to Webcam');
+        function changeCaptureMode(val) {
+            state.captureMode = parseInt(val);
+            document.getElementById('capture-btn-label').innerText = state.captureMode === 1 ? 'TAKE PHOTO' : `TAKE ${state.captureMode}-SHOT STRIP`;
         }
 
         function toggleReadyState() {
             state.isReady = !state.isReady;
-            const btn = document.getElementById('ready-btn-text');
-            btn.innerText = state.isReady ? 'YOU ARE READY!' : "I'M READY";
+            document.getElementById('ready-btn-text').innerText = state.isReady ? 'READY ✓' : "I'M READY";
+            showToast(state.isReady ? 'Signaled READY to the booth!' : 'Ready status paused');
         }
 
-        // PHOTO CAPTURE SEQUENCE ENGINE
+        function toggleCamera() {
+            state.cameraActive = !state.cameraActive;
+            const btn = document.getElementById('toggle-cam-btn');
+            btn.querySelector('span').innerText = state.cameraActive ? 'Cam On' : 'Cam Off';
+        }
+
+        function toggleVirtualFriend() {
+            state.showVirtualFriend = !state.showVirtualFriend;
+            document.getElementById('friend-sim-label').innerText = state.showVirtualFriend ? '- Remove Friend' : '+ Add Friend';
+        }
+
+        // ============================================================
+        // SYNCHRONIZED CAPTURE & HIGH-RES COMPOSITE GENERATOR
+        // ============================================================
+        let developingTimeout = null;
+
         async function startPhotoCaptureSequence() {
             state.capturedPoses = [];
             const tray = document.getElementById('multi-shot-tray');
             const thumbContainer = document.getElementById('thumbnails-container');
             thumbContainer.innerHTML = '';
+
             if (state.captureMode > 1) tray.classList.remove('hidden');
+            else tray.classList.add('hidden');
 
-            for (let i = 0; i < state.captureMode; i++) {
-                await runCountdown(3, `SHOT ${i + 1} OF ${state.captureMode}`);
-                playSnapSound();
-                flashScreen();
+            for (let shot = 1; shot <= state.captureMode; shot++) {
+                await runSingleCountdown(shot, state.captureMode);
+                const snapDataUrl = captureStageSnapshot();
+                state.capturedPoses.push(snapDataUrl);
 
-                // Capture snapshot frame from stage canvas
-                const stageCanvas = document.getElementById('live-stage-canvas');
-                const dataUrl = stageCanvas.toDataURL('image/png');
-                state.capturedPoses.push(dataUrl);
-
-                if (state.captureMode > 1) {
-                    const img = document.createElement('img');
-                    img.src = dataUrl;
-                    img.className = 'w-16 h-16 object-cover rounded-lg border-2 border-espresso shadow';
-                    thumbContainer.appendChild(img);
-                }
+                const img = document.createElement('img');
+                img.src = snapDataUrl;
+                img.className = 'w-20 h-14 object-cover rounded-lg border-2 border-espresso shadow';
+                thumbContainer.appendChild(img);
             }
 
-            // Move to Darkroom reveal
-            startDevelopingSequence();
+            beginDarkroomDeveloping();
         }
 
-        function runCountdown(sec, titleText) {
+        function runSingleCountdown(currentShot, totalShots) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('countdown-modal');
                 const numEl = document.getElementById('countdown-number');
-                const subtext = document.getElementById('countdown-subtext');
-                subtext.innerText = titleText;
+                const subEl = document.getElementById('countdown-subtext');
                 modal.classList.remove('hidden');
 
-                let count = sec;
+                let count = 3;
+                subEl.innerText = totalShots > 1 ? `POSE ${currentShot} OF ${totalShots} IN` : 'SYNCHRONIZED CAPTURE IN';
                 numEl.innerText = count;
                 playBeepSound(440);
 
@@ -1213,91 +1160,142 @@
                         playBeepSound(440);
                     } else if (count === 0) {
                         numEl.innerText = 'CHEESE!';
-                        playBeepSound(880);
+                        playSnapSound();
+                        triggerScreenFlash();
                     } else {
                         clearInterval(timer);
                         modal.classList.add('hidden');
                         resolve();
                     }
-                }, 900);
+                }, 700);
             });
         }
 
-        function flashScreen() {
+        function triggerScreenFlash() {
             const flash = document.getElementById('flash-element');
+            flash.classList.remove('flash-overlay');
+            void flash.offsetWidth;
             flash.classList.add('flash-overlay');
-            setTimeout(() => flash.classList.remove('flash-overlay'), 500);
         }
 
-        // DARKROOM DEVELOPING
-        function startDevelopingSequence() {
+        function captureStageSnapshot() {
+            const stageCanvas = document.getElementById('live-stage-canvas');
+            const snapCanvas = document.createElement('canvas');
+            snapCanvas.width = stageCanvas.width;
+            snapCanvas.height = stageCanvas.height;
+            const sCtx = snapCanvas.getContext('2d');
+
+            const filterMap = {
+                'filter-warm': 'sepia(0.2) contrast(1.05) saturate(1.1)',
+                'filter-disposable': 'contrast(1.2) saturate(1.25) sepia(0.15)',
+                'filter-bw': 'grayscale(1) contrast(1.2)',
+                'filter-none': 'none'
+            };
+            sCtx.filter = filterMap[state.selectedFilter] || 'none';
+            sCtx.drawImage(stageCanvas, 0, 0);
+            return snapCanvas.toDataURL('image/png');
+        }
+
+        async function beginDarkroomDeveloping() {
+            await buildFinalCompositeCanvas();
             showView('developing');
-            const preview = document.getElementById('developing-img-preview');
-            preview.src = state.capturedPoses[0];
+
+            const previewImg = document.getElementById('developing-img-preview');
+            const statusText = document.getElementById('developing-status-text');
+            previewImg.src = state.capturedPoses[0];
+
+            const captions = [
+                '"Developing questionable decisions..."',
+                '"Checking if anyone blinked..."',
+                '"Collecting pixels across timezones..."',
+                '"Making friendship look JPEG-shaped..."'
+            ];
+            let idx = 0;
+            const capTimer = setInterval(() => {
+                idx = (idx + 1) % captions.length;
+                statusText.innerText = captions[idx];
+            }, 750);
 
             setTimeout(() => {
-                preview.className = 'w-full h-full object-cover transition-all duration-1000 filter blur-0 opacity-100';
-            }, 800);
+                previewImg.classList.remove('blur-md', 'opacity-40');
+            }, 350);
 
-            setTimeout(() => {
-                finishDevelopingImmediately();
-            }, 2500);
+            developingTimeout = setTimeout(() => {
+                clearInterval(capTimer);
+                showView('result');
+            }, 2600);
         }
 
         function finishDevelopingImmediately() {
-            renderFinalCompositeCanvas();
+            if (developingTimeout) clearTimeout(developingTimeout);
             showView('result');
         }
 
-        // FINAL COMPOSITE STRIP GENERATOR
-        function renderFinalCompositeCanvas() {
+        function loadImageAsync(src) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = src;
+            });
+        }
+
+        async function buildFinalCompositeCanvas() {
             const canvas = document.getElementById('final-composite-canvas');
             const ctx = canvas.getContext('2d');
+            const count = state.capturedPoses.length || 1;
 
-            const shots = state.capturedPoses.length;
-            canvas.width = 800;
-            canvas.height = shots === 1 ? 600 : (shots === 4 ? 1400 : 1800);
+            const pad = 36;
+            const frameW = 480;
+            const frameH = 330;
+            const gap = 22;
+            const headerH = 75;
+            const footerH = 85;
 
-            // Paper Background
-            ctx.fillStyle = '#F3EBDD';
+            canvas.width = frameW + pad * 2;
+            canvas.height = headerH + (frameH * count) + (gap * (count - 1)) + footerH;
+
+            // Strip Background Theme
+            if (state.selectedScene === 'spidey') {
+                ctx.fillStyle = '#DC2626';
+            } else if (state.selectedScene === 'anime') {
+                ctx.fillStyle = '#FDE68A';
+            } else {
+                ctx.fillStyle = '#FBF7F0';
+            }
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Card Frame
-            ctx.fillStyle = '#FBF7F0';
+            // Outer Border
             ctx.strokeStyle = '#51463D';
-            ctx.lineWidth = 6;
-            ctx.fillRect(30, 30, canvas.width - 60, canvas.height - 60);
-            ctx.strokeRect(30, 30, canvas.width - 60, canvas.height - 60);
+            ctx.lineWidth = 8;
+            ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
 
-            // Title Header
-            ctx.fillStyle = '#51463D';
-            ctx.font = 'bold 36px "Space Grotesk", sans-serif';
-            ctx.fillText(`FriendsBooth.io — ${state.roomName}`, 60, 90);
+            // Header Title
+            ctx.fillStyle = state.selectedScene === 'spidey' ? '#FFFFFF' : '#51463D';
+            ctx.font = 'bold 26px "Space Grotesk", sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('FriendsBooth.io', pad, 48);
 
-            ctx.font = 'bold 20px "DM Mono", monospace';
-            ctx.fillText(`ROOM: #${state.roomCode} • ${new Date().toLocaleDateString()}`, 60, 125);
+            ctx.font = 'bold 13px "DM Mono", monospace';
+            ctx.fillText(`ROOM #${state.roomCode} • ${new Date().toLocaleDateString()}`, canvas.width - pad - 210, 46);
 
-            // Render Captured Shots
-            const frameW = canvas.width - 120;
-            const frameH = shots === 1 ? 400 : 260;
-            const startY = 150;
+            // Load & Draw Each Captured Pose Frame Synchronously
+            for (let i = 0; i < state.capturedPoses.length; i++) {
+                const img = await loadImageAsync(state.capturedPoses[i]);
+                if (img) {
+                    const y = headerH + i * (frameH + gap);
+                    ctx.drawImage(img, pad, y, frameW, frameH);
+                    ctx.strokeStyle = '#51463D';
+                    ctx.lineWidth = 4;
+                    ctx.strokeRect(pad, y, frameW, frameH);
+                }
+            }
 
-            state.capturedPoses.forEach((dataUrl, idx) => {
-                const img = new Image();
-                img.src = dataUrl;
-                const fy = startY + idx * (frameH + 15);
-
-                ctx.fillStyle = '#E9DFCF';
-                ctx.fillRect(60, fy, frameW, frameH);
-                ctx.strokeRect(60, fy, frameW, frameH);
-                ctx.drawImage(img, 60, fy, frameW, frameH);
-            });
-
-            // Subtitle Footer
-            const footerY = canvas.height - 60;
-            ctx.font = 'bold 28px "Caveat", cursive';
-            ctx.fillStyle = '#D88772';
-            ctx.fillText('"east or west Abrish is the best — distance is a scam."', 60, footerY);
+            // Footer Tagline
+            const footerY = canvas.height - 32;
+            ctx.fillStyle = state.selectedScene === 'spidey' ? '#FACC15' : '#D88772';
+            ctx.font = 'bold 22px "Caveat", cursive';
+            ctx.fillText('"east or west Abrish is the best — distance is a scam."', pad, footerY);
         }
 
         function downloadCompositePhoto() {
@@ -1321,190 +1319,28 @@
 
         function leaveRoom() {
             if (state.localStream) state.localStream.getTracks().forEach(t => t.stop());
+            state.localStream = null;
+            state.cameraActive = false;
             showView('landing');
         }
 
-        // AVATAR DRAWING ENGINE (10 Options for Hair, Eyes, Nose, Mouth, Ears, Beard, Glasses, Shirt, Pants, Shoes)
-        function setAvatarItem(cat, val) {
-            state.avatar[cat] = parseInt(val);
-            renderAvatarPreview();
-        }
-        function setAvatarColor(type, col) {
-            if (type === 'skin') state.avatar.skin = col;
-            if (type === 'hair') state.avatar.hairColor = col;
-            renderAvatarPreview();
-        }
-
-        function renderAvatarPreview() {
-            const canvas = document.getElementById('avatar-preview-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            drawAvatarGraphic(ctx, canvas.width / 2, canvas.height / 2 + 20, 1);
-            drawWalkingAvatarOnCanvas();
-        }
-
-        function drawAvatarGraphic(ctx, cx, cy, scale = 1) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.scale(scale, scale);
-
-            const a = state.avatar;
-
-            // 1. Pants / Legs
-            ctx.fillStyle = ['#1D4ED8', '#374151', '#9CA3AF', '#059669', '#7C3AED', '#D97706', '#DB2777', '#4B5563', '#111827', '#E11D48'][a.pants];
-            ctx.fillRect(-25, 40, 20, 45);
-            ctx.fillRect(5, 40, 20, 45);
-
-            // 2. Shoes
-            ctx.fillStyle = ['#111827', '#78350F', '#D97706', '#DC2626', '#2563EB', '#059669', '#F59E0B', '#6B7280', '#000000', '#F472B6'][a.shoes];
-            ctx.fillRect(-28, 80, 25, 12);
-            ctx.fillRect(3, 80, 25, 12);
-
-            // 3. Shirt / Body
-            ctx.fillStyle = ['#DC2626', '#2563EB', '#059669', '#D97706', '#7C3AED', '#111827', '#F59E0B', '#EC4899', '#4B5563', '#0284C7'][a.shirt];
-            ctx.fillRect(-35, -20, 70, 65);
-
-            // 4. Ears
-            ctx.fillStyle = a.skin;
-            if (a.ears === 1) { // Elf ears
-                ctx.beginPath(); ctx.moveTo(-45, -50); ctx.lineTo(-55, -65); ctx.lineTo(-40, -40); ctx.fill();
-                ctx.beginPath(); ctx.moveTo(45, -50); ctx.lineTo(55, -65); ctx.lineTo(40, -40); ctx.fill();
-            } else {
-                ctx.beginPath(); ctx.arc(-42, -50, 10, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(42, -50, 10, 0, Math.PI * 2); ctx.fill();
-            }
-
-            // 5. Head / Skin
-            ctx.beginPath();
-            ctx.arc(0, -50, 40, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#51463D';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-
-            // 6. Eyes
-            ctx.fillStyle = '#51463D';
-            if (a.eyes === 0) { // Dots
-                ctx.beginPath(); ctx.arc(-15, -55, 4, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(15, -55, 4, 0, Math.PI * 2); ctx.fill();
-            } else if (a.eyes === 1) { // Arches
-                ctx.beginPath(); ctx.arc(-15, -55, 6, Math.PI, 0); ctx.stroke();
-                ctx.beginPath(); ctx.arc(15, -55, 6, Math.PI, 0); ctx.stroke();
-            } else if (a.eyes === 7) { // Hearts
-                ctx.fillStyle = '#E11D48';
-                ctx.fillText('♥', -20, -50); ctx.fillText('♥', 10, -50);
-            } else {
-                ctx.beginPath(); ctx.arc(-15, -55, 5, 0, Math.PI * 2); ctx.fill();
-                ctx.beginPath(); ctx.arc(15, -55, 5, 0, Math.PI * 2); ctx.fill();
-            }
-
-            // 7. Nose
-            ctx.fillStyle = '#51463D';
-            if (a.nose === 1) { ctx.fillRect(-2, -50, 4, 10); }
-            else { ctx.beginPath(); ctx.arc(0, -45, 3, 0, Math.PI * 2); ctx.fill(); }
-
-            // 8. Mouth
-            ctx.beginPath();
-            if (a.mouth === 1) { ctx.arc(0, -35, 10, 0, Math.PI); }
-            else { ctx.moveTo(-10, -35); ctx.lineTo(10, -35); }
-            ctx.stroke();
-
-            // 9. Beard
-            if (a.beard > 0) {
-                ctx.fillStyle = a.hairColor;
-                ctx.fillRect(-20, -30, 40, 15);
-            }
-
-            // 10. Glasses
-            if (a.glasses > 0) {
-                ctx.strokeStyle = '#000';
-                ctx.lineWidth = 3;
-                ctx.strokeRect(-25, -63, 20, 15);
-                ctx.strokeRect(5, -63, 20, 15);
-                ctx.beginPath(); ctx.moveTo(-5, -55); ctx.lineTo(5, -55); ctx.stroke();
-            }
-
-            // 11. Hair
-            ctx.fillStyle = a.hairColor;
-            if (a.hair === 0) { // Short Spiky
-                ctx.beginPath(); ctx.arc(0, -65, 42, Math.PI, 0); ctx.fill();
-            } else if (a.hair === 1) { // Bob
-                ctx.fillRect(-44, -85, 88, 50);
-            } else if (a.hair === 5) { // Beanie
-                ctx.fillStyle = '#DC2626';
-                ctx.fillRect(-42, -90, 84, 35);
-            } else {
-                ctx.beginPath(); ctx.arc(0, -65, 43, Math.PI, 0); ctx.fill();
-            }
-
-            ctx.restore();
-        }
-
-        // WALKING SCREEN COMPANION
-        function initAvatarWalkAnimation() {
-            function loop() {
-                const w = state.avatarWalk;
-                if (Math.abs(w.x - w.targetX) > 4) {
-                    w.isWalking = true;
-                    w.direction = w.targetX > w.x ? 1 : -1;
-                    w.x += w.direction * 3;
-                    w.legAngle += 0.2;
-                } else {
-                    w.isWalking = false;
-                }
-
-                const container = document.getElementById('walking-avatar-container');
-                if (container) {
-                    container.style.transform = `translateX(${w.x}px)`;
-                }
-
-                drawWalkingAvatarOnCanvas();
-                requestAnimationFrame(loop);
-            }
-            requestAnimationFrame(loop);
-        }
-
-        function drawWalkingAvatarOnCanvas() {
-            const canvas = document.getElementById('walking-avatar-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawAvatarGraphic(ctx, 35, 45, 0.45);
-        }
-
-        function handleAvatarClick(e) {
-            e.stopPropagation();
-            const quotes = [
-                '"POSE, IDIOT!"',
-                '"east or west Abrish is the best"',
-                '"distance is a scam!"',
-                '"THWIP!"',
-                '"Ray says hi!"',
-                '"YOU LOOK GOOD BTW."'
-            ];
-            const bubble = document.getElementById('avatar-speech-bubble');
-            bubble.innerText = quotes[Math.floor(Math.random() * quotes.length)];
-            playBeepSound(600);
-        }
-
-        // 3D SCRAPBOOK DIARY ENGINE
+        // ============================================================
+        // INTERACTIVE SCRAPBOOK DIARY ENGINE
+        // ============================================================
         function renderDiaryBook() {
             const wrapper = document.getElementById('diary-book-wrapper');
             if (!wrapper) return;
 
             const pageIndex = state.diary.currentPage;
-            const totalPages = state.diary.pages.length + 2; // +1 checklist, +1 bio page
+            const totalPages = state.diary.pages.length + 2;
             document.getElementById('diary-page-indicator').innerText = `PAGE ${pageIndex + 1} OF ${totalPages}`;
 
             wrapper.innerHTML = '';
 
             const pageCard = document.createElement('div');
-            pageCard.className = 'paper-card p-8 rounded-3xl bg-cream max-w-xl w-full min-h-[480px] space-y-6 shadow-2xl relative border-4 border-espresso';
+            pageCard.className = 'paper-card p-6 sm:p-8 rounded-3xl bg-cream max-w-xl w-full min-h-[460px] space-y-6 shadow-2xl relative border-4 border-espresso';
 
             if (pageIndex < state.diary.pages.length) {
-                // User Entry Page
                 const pageData = state.diary.pages[pageIndex];
                 pageCard.innerHTML = `
                     <div class="flex items-center justify-between border-b-2 border-espresso/20 pb-3">
@@ -1513,32 +1349,31 @@
                     </div>
 
                     <div class="space-y-4">
-                        <textarea onchange="updatePageText(${pageIndex}, this.value)" class="w-full h-32 p-3 bg-vanilla/60 border-2 border-espresso rounded-2xl font-hand text-2xl text-espresso focus:outline-none">${pageData.text}</textarea>
+                        <textarea onchange="updatePageText(${pageIndex}, this.value)" class="w-full h-32 p-3 bg-vanilla/60 border-2 border-espresso rounded-2xl ${pageData.font} text-2xl text-espresso focus:outline-none">${pageData.text}</textarea>
                         
                         <div class="flex flex-wrap items-center justify-between gap-2 font-mono text-xs">
                             <label class="flex items-center gap-1 font-bold">
                                 <span>Font:</span>
                                 <select onchange="updatePageFont(${pageIndex}, this.value)" class="bg-sand border border-espresso rounded p-1 font-bold">
-                                    <option value="font-hand">Caveat Handwriting</option>
-                                    <option value="font-display">Space Grotesk</option>
-                                    <option value="font-mono">DM Mono</option>
+                                    <option value="font-hand" ${pageData.font === 'font-hand' ? 'selected' : ''}>Caveat Handwriting</option>
+                                    <option value="font-display" ${pageData.font === 'font-display' ? 'selected' : ''}>Space Grotesk</option>
+                                    <option value="font-mono" ${pageData.font === 'font-mono' ? 'selected' : ''}>DM Mono</option>
                                 </select>
                             </label>
                             <button onclick="attachPhotoToCurrentPage(${pageIndex})" class="paper-button-secondary text-xs px-3 py-1.5 rounded-lg font-bold">
-                                📸 Attach Last Photobooth Strip
+                                📸 Stick Last Photobooth Strip
                             </button>
                         </div>
 
                         ${pageData.attachedPhoto ? `
-                            <div class="relative p-2 bg-sand rounded-xl border-2 border-espresso shadow-lg transform rotate-2 mt-4">
-                                <img src="${pageData.attachedPhoto}" class="w-full h-40 object-cover rounded-lg">
-                                <button onclick="removeAttachedPhoto(${pageIndex})" class="absolute top-1 right-1 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">✕</button>
+                            <div class="relative p-2 bg-sand rounded-xl border-2 border-espresso shadow-lg transform rotate-1 mt-4">
+                                <img src="${pageData.attachedPhoto}" class="w-full max-h-64 object-contain rounded-lg">
+                                <button onclick="removeAttachedPhoto(${pageIndex})" class="absolute top-2 right-2 bg-terracotta text-white border border-espresso rounded-full w-7 h-7 flex items-center justify-center font-bold text-xs">✕</button>
                             </div>
                         ` : ''}
                     </div>
                 `;
             } else if (pageIndex === state.diary.pages.length) {
-                // Penultimate Checklist Page
                 pageCard.innerHTML = `
                     <div class="border-b-2 border-espresso/20 pb-2">
                         <span class="font-mono text-xs font-bold text-terracotta">EDITABLE CHECKLIST</span>
@@ -1555,7 +1390,6 @@
                     </div>
                 `;
             } else {
-                // Final Creator Bio Page
                 pageCard.innerHTML = `
                     <div class="space-y-4 text-espresso font-mono">
                         <div class="flex items-center justify-between border-b-2 border-espresso/20 pb-2">
@@ -1614,8 +1448,9 @@
         function updatePageFont(idx, val) { state.diary.pages[idx].font = val; renderDiaryBook(); }
 
         function attachPhotoToCurrentPage(idx) {
-            if (state.capturedPoses.length > 0) {
-                state.diary.pages[idx].attachedPhoto = state.capturedPoses[0];
+            const finalCanvas = document.getElementById('final-composite-canvas');
+            if (state.capturedPoses.length > 0 && finalCanvas) {
+                state.diary.pages[idx].attachedPhoto = finalCanvas.toDataURL('image/png');
                 renderDiaryBook();
                 showToast('Attached photobooth strip to diary page!');
             } else {
@@ -1668,7 +1503,7 @@
         // TOAST SYSTEM
         function showToast(msg) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-6 right-6 z-50 bg-espresso text-cream font-mono text-xs px-4 py-3 rounded-2xl border-2 border-butter shadow-2xl flex items-center gap-2 animate-bounce';
+            toast.className = 'fixed bottom-6 right-6 z-50 bg-espresso text-cream font-mono text-xs px-4 py-3 rounded-2xl border-2 border-butter shadow-2xl flex items-center gap-2';
             toast.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 text-butter"></i> <span>${msg}</span>`;
             document.body.appendChild(toast);
             lucide.createIcons();
